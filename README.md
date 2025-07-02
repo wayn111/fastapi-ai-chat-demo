@@ -57,7 +57,7 @@ fastapi-ai-chat-demo/
 
 - **后端**: FastAPI + Python
 - **存储**: Redis
-- **AI模型**: OpenAI GPT-3.5-turbo
+- **AI模型**: OpenAI GPT-4o
 - **前端**: HTML + CSS + JavaScript
 - **特性**: SSE流式响应、Markdown解析、代码高亮
 

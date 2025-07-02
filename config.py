@@ -34,7 +34,7 @@ class Config:
     # OpenAI配置
     OPENAI_API_KEY: str = os.getenv('OPENAI_API_KEY', '')
     OPENAI_BASE_URL: str = os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1')
-    OPENAI_MODEL: str = os.getenv('OPENAI_MODEL', 'gpt-3.5-turbo')
+    OPENAI_MODEL: str = os.getenv('OPENAI_MODEL', 'gpt-4o')
     OPENAI_MAX_TOKENS: int = int(os.getenv('OPENAI_MAX_TOKENS', 1000))
     OPENAI_TEMPERATURE: float = float(os.getenv('OPENAI_TEMPERATURE', 0.7))
     

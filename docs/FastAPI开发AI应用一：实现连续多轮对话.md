@@ -18,7 +18,7 @@
 
 - **后端框架**：FastAPI（Python的现代Web框架）
 - **数据存储**：Redis（高性能内存数据库）
-- **AI模型**：OpenAI GPT-3.5-turbo
+- **AI模型**：OpenAI GPT-4o
 - **前端**：HTML + CSS + JavaScript
 - **服务器**：Uvicorn（高性能ASGI服务器）
 
@@ -221,7 +221,7 @@ messages = [
 **4. 调用AI服务**
 ```python
 response = client.chat.completions.create(
-    model="gpt-3.5-turbo",
+    model="gpt-4o",
     messages=messages,
     stream=True  # 关键：启用流式响应
 )
@@ -485,7 +485,7 @@ def build_conversation_context(session_id, current_message, role):
 def generate_streaming_response(session_id, message, role):
     # 调用AI服务，启用流式模式
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o",
         messages=build_context(session_id, message, role),
         stream=True  # 关键：启用流式响应
     )
