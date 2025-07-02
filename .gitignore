@@ -1,0 +1,47 @@
+# 日志文件
+logs/
+app.log
+*.log
+
+# Ignore logs directory completely
+logs/**
+
+# Python缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 环境变量文件（如果包含敏感信息）
+# .env
+
+# IDE文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 虚拟环境
+venv/
+env/
+.venv/
+
+# 分发/打包
+build/
+dist/
+*.egg-info/
+
+# 测试覆盖率
+.coverage
+htmlcov/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+.env

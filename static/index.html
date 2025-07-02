@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FastAPI AI聊天演示</title>
+    <!-- 引入marked.js用于Markdown解析 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 引入highlight.js用于代码高亮 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -14,57 +19,142 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            padding: 20px;
         }
         
         .chat-container {
-            width: 800px;
-            height: 600px;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            max-height: 700px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            transition: all 0.3s ease;
         }
         
         .chat-header {
-            background: #4f46e5;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px;
+            padding: 24px;
             text-align: center;
-            font-size: 18px;
-            font-weight: bold;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .session-info {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 12px 24px;
+            border-bottom: 1px solid rgba(14, 165, 233, 0.1);
+            font-size: 13px;
+            color: #0369a1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+        }
+        
+        .clear-history-btn {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        }
+        
+        .clear-history-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+        
+        .clear-history-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         
         .role-selector {
-            background: #f8fafc;
-            padding: 10px 20px;
-            border-bottom: 1px solid #e2e8f0;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
         }
         
         .role-selector select {
             width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
             font-size: 14px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .role-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         
         .chat-messages {
             flex: 1;
-            padding: 20px;
+            padding: 24px;
             overflow-y: auto;
-            background: #f9fafb;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            scroll-behavior: smooth;
+        }
+        
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 3px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.3);
+            border-radius: 3px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.5);
         }
         
         .message {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             display: flex;
-            align-items: flex-start;
+            align-items: flex-end;
+            animation: messageSlideIn 0.4s ease-out;
+        }
+        
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .message.user {
@@ -72,138 +162,464 @@
         }
         
         .message-content {
-            max-width: 70%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            font-size: 14px;
-            line-height: 1.4;
+            max-width: 75%;
+            padding: 16px 20px;
+            border-radius: 24px;
+            font-size: 15px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
         }
         
         .message.user .message-content {
-            background: #4f46e5;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-bottom-right-radius: 4px;
+            border-bottom-right-radius: 8px;
+            margin-left: 20px;
+        }
+        
+        .message.user .message-content::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: -8px;
+            width: 0;
+            height: 0;
+            border: 8px solid transparent;
+            border-left-color: #764ba2;
+            border-bottom: none;
+            border-right: none;
         }
         
         .message.assistant .message-content {
             background: white;
             color: #374151;
+            border: 2px solid rgba(102, 126, 234, 0.1);
+            border-bottom-left-radius: 8px;
+            margin-right: 20px;
+        }
+        
+        /* Markdown内容样式 */
+        .message-content h1, .message-content h2, .message-content h3,
+        .message-content h4, .message-content h5, .message-content h6 {
+            margin: 12px 0 8px 0;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        
+        .message-content h1 { font-size: 1.5em; }
+        .message-content h2 { font-size: 1.3em; }
+        .message-content h3 { font-size: 1.1em; }
+        
+        .message-content p {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+        
+        .message-content ul, .message-content ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        
+        .message-content li {
+            margin: 4px 0;
+            line-height: 1.5;
+        }
+        
+        .message-content blockquote {
+            margin: 12px 0;
+            padding: 8px 16px;
+            border-left: 4px solid #667eea;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .message-content code {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .message-content pre {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        .message-content pre code {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+        }
+        
+        .message-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 12px 0;
+            font-size: 0.9em;
+        }
+        
+        .message-content th, .message-content td {
             border: 1px solid #e5e7eb;
-            border-bottom-left-radius: 4px;
+            padding: 8px 12px;
+            text-align: left;
         }
         
-        .chat-input {
-            padding: 20px;
-            background: white;
-            border-top: 1px solid #e5e7eb;
-            display: flex;
-            gap: 10px;
+        .message-content th {
+            background: rgba(102, 126, 234, 0.1);
+            font-weight: 600;
         }
         
-        .chat-input input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 1px solid #d1d5db;
-            border-radius: 25px;
-            font-size: 14px;
-            outline: none;
+        .message-content a {
+            color: #667eea;
+            text-decoration: none;
         }
         
-        .chat-input input:focus {
-            border-color: #4f46e5;
+        .message-content a:hover {
+            text-decoration: underline;
         }
         
-        .chat-input button {
-            padding: 12px 24px;
-            background: #4f46e5;
-            color: white;
+        .message-content hr {
             border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
+            border-top: 2px solid rgba(102, 126, 234, 0.2);
+            margin: 16px 0;
         }
         
-        .chat-input button:hover {
-            background: #4338ca;
+        .message.assistant .message-content::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -10px;
+            width: 0;
+            height: 0;
+            border: 8px solid transparent;
+            border-right-color: white;
+            border-bottom: none;
+            border-left: none;
         }
         
-        .chat-input button:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
+        .message.assistant .message-content::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: -12px;
+            width: 0;
+            height: 0;
+            border: 10px solid transparent;
+            border-right-color: rgba(102, 126, 234, 0.1);
+            border-bottom: none;
+            border-left: none;
         }
         
         .typing-indicator {
             display: none;
-            padding: 12px 16px;
+            margin-bottom: 20px;
+            justify-content: flex-start;
+        }
+        
+        .typing-content {
             background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 18px;
-            border-bottom-left-radius: 4px;
-            max-width: 70%;
-            font-size: 14px;
+            border: 2px solid rgba(102, 126, 234, 0.1);
+            border-radius: 24px;
+            border-bottom-left-radius: 8px;
+            padding: 16px 20px;
+            font-size: 15px;
             color: #6b7280;
+            max-width: 75%;
+            margin-right: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .typing-content::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -10px;
+            width: 0;
+            height: 0;
+            border: 8px solid transparent;
+            border-right-color: white;
+            border-bottom: none;
+            border-left: none;
+        }
+        
+        .typing-content::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: -12px;
+            width: 0;
+            height: 0;
+            border: 10px solid transparent;
+            border-right-color: rgba(102, 126, 234, 0.1);
+            border-bottom: none;
+            border-left: none;
         }
         
         .typing-dots {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
         
-        .typing-dots::after {
-            content: '.';
-            animation: dots 1.5s steps(5, end) infinite;
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: typingDots 1.4s infinite ease-in-out;
         }
         
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60% { content: '...'; }
-            90%, 100% { content: ''; }
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0s; }
+        
+        @keyframes typingDots {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
         
-        .session-info {
-            background: #f0f9ff;
-            padding: 10px 20px;
-            border-bottom: 1px solid #e0f2fe;
-            font-size: 12px;
-            color: #0369a1;
+        .chat-input {
+            padding: 24px;
+            background: white;
+            border-top: 1px solid rgba(148, 163, 184, 0.2);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 25px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+        
+        .chat-input input:focus {
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .chat-input button {
+            padding: 16px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chat-input button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .chat-input button:hover::before {
+            left: 100%;
+        }
+        
+        #sendButton {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        #sendButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        #sendButton:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        #startButton {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        #startButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .chat-container {
+                height: 95vh;
+                border-radius: 16px;
+            }
+            
+            .chat-header {
+                padding: 20px 16px;
+                font-size: 18px;
+            }
+            
+            .session-info {
+                padding: 10px 16px;
+                font-size: 12px;
+                flex-direction: column;
+                gap: 8px;
+                align-items: flex-start;
+            }
+            
+            .role-selector {
+                padding: 12px 16px;
+            }
+            
+            .chat-messages {
+                padding: 16px;
+            }
+            
+            .message-content {
+                max-width: 85%;
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+            
+            .chat-input {
+                padding: 16px;
+                gap: 8px;
+                flex-direction: column;
+            }
+            
+            .chat-input input {
+                padding: 14px 18px;
+                font-size: 14px;
+            }
+            
+            .chat-input button {
+                padding: 14px 20px;
+                font-size: 14px;
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .message-content {
+                max-width: 90%;
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+            
+            .chat-header {
+                font-size: 16px;
+            }
+        }
+        
+        /* 深色模式支持 */
+        @media (prefers-color-scheme: dark) {
+            .chat-container {
+                background: rgba(31, 41, 55, 0.95);
+            }
+            
+            .chat-messages {
+                background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            }
+            
+            .message.assistant .message-content {
+                background: #374151;
+                color: #f3f4f6;
+                border-color: rgba(102, 126, 234, 0.3);
+            }
+            
+            .chat-input {
+                background: #374151;
+            }
+            
+            .chat-input input {
+                background: #4b5563;
+                border-color: #6b7280;
+                color: #f3f4f6;
+            }
+            
+            .chat-input input:focus {
+                background: #374151;
+            }
         }
     </style>
 </head>
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            FastAPI AI聊天演示
+            🤖 FastAPI AI聊天演示
         </div>
         
         <div class="session-info">
-            会话ID: <span id="sessionId">未连接</span>
+            <span>💬 会话ID: <span id="sessionId">未连接</span></span>
+            <button id="clearHistoryBtn" class="clear-history-btn" onclick="clearHistory()" disabled>🗑️ 清除历史</button>
         </div>
         
         <div class="role-selector">
             <select id="roleSelect">
-                <option value="assistant">智能助手</option>
-                <option value="teacher">AI老师</option>
-                <option value="programmer">编程专家</option>
+                <option value="assistant">🤖 智能助手</option>
+                <option value="teacher">👨‍🏫 AI老师</option>
+                <option value="programmer">👨‍💻 编程专家</option>
             </select>
         </div>
         
         <div class="chat-messages" id="chatMessages">
             <div class="message assistant">
                 <div class="message-content">
-                    欢迎使用FastAPI AI聊天演示！点击下方按钮开始新的对话。
+                    👋 欢迎使用FastAPI AI聊天演示！点击下方按钮开始新的对话。
                 </div>
             </div>
         </div>
         
         <div class="typing-indicator" id="typingIndicator">
-            AI正在思考<span class="typing-dots"></span>
+            <div class="typing-content">
+                🤔 AI正在思考
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
         </div>
         
         <div class="chat-input">
-            <input type="text" id="messageInput" placeholder="输入您的消息..." disabled>
-            <button id="sendButton" onclick="sendMessage()" disabled>发送</button>
-            <button id="startButton" onclick="startNewChat()">开始对话</button>
+            <input type="text" id="messageInput" placeholder="💭 输入您的消息..." disabled>
+            <button id="sendButton" onclick="sendMessage()" disabled>📤 发送</button>
+            <button id="startButton" onclick="startNewChat()">🚀 开始对话</button>
         </div>
     </div>
 
@@ -211,17 +627,23 @@
         let currentSessionId = null;
         let userId = 'demo_user_' + Math.random().toString(36).substr(2, 9);
         
-        // 开始新的聊天会话
+        /**
+         * 开始新的聊天会话
+         * 创建新的会话ID并初始化聊天界面
+         */
         async function startNewChat() {
             try {
-                const response = await fetch(`/chat/start?user_id=${userId}`);
+                const response = await fetch(`/chat/start?user_id=${userId}`, {
+                    method: 'POST'
+                });
                 const data = await response.json();
                 
                 currentSessionId = data.session_id;
                 document.getElementById('sessionId').textContent = currentSessionId.substr(0, 8) + '...';
                 document.getElementById('messageInput').disabled = false;
                 document.getElementById('sendButton').disabled = false;
-                document.getElementById('startButton').textContent = '重新开始';
+                document.getElementById('clearHistoryBtn').disabled = false;
+                document.getElementById('startButton').textContent = '🔄 重新开始';
                 
                 // 清空聊天记录
                 const chatMessages = document.getElementById('chatMessages');
@@ -230,13 +652,18 @@
                 // 添加欢迎消息
                 addMessage('assistant', data.welcome_message);
                 
+                // 聚焦输入框
+                document.getElementById('messageInput').focus();
+                
             } catch (error) {
                 console.error('启动聊天失败:', error);
                 alert('启动聊天失败，请检查服务器连接');
             }
         }
         
-        // 发送消息
+        /**
+         * 发送消息到AI并处理流式响应
+         */
         async function sendMessage() {
             const messageInput = document.getElementById('messageInput');
             const message = messageInput.value.trim();
@@ -272,7 +699,21 @@
                             messageElement = addMessage('assistant', '');
                         }
                         aiMessage += data.content;
-                        messageElement.textContent = aiMessage;
+                        
+                        // 实时渲染Markdown内容
+                        if (aiMessage.includes('```') || aiMessage.includes('**') || aiMessage.includes('##') || aiMessage.includes('- ') || aiMessage.includes('1. ')) {
+                            try {
+                                messageElement.innerHTML = marked.parse(aiMessage);
+                                // 对代码块进行语法高亮
+                                messageElement.querySelectorAll('pre code').forEach((block) => {
+                                    hljs.highlightElement(block);
+                                });
+                            } catch (error) {
+                                messageElement.textContent = aiMessage;
+                            }
+                        } else {
+                            messageElement.textContent = aiMessage;
+                        }
                         scrollToBottom();
                     } else if (data.type === 'end') {
                         eventSource.close();
@@ -282,7 +723,7 @@
                         messageInput.focus();
                     } else if (data.type === 'error') {
                         hideTypingIndicator();
-                        addMessage('assistant', data.content);
+                        addMessage('assistant', '❌ ' + data.content);
                         eventSource.close();
                         messageInput.disabled = false;
                         document.getElementById('sendButton').disabled = false;
@@ -292,7 +733,7 @@
                 eventSource.onerror = function(event) {
                     console.error('EventSource错误:', event);
                     hideTypingIndicator();
-                    addMessage('assistant', '抱歉，连接出现问题，请重试。');
+                    addMessage('assistant', '❌ 抱歉，连接出现问题，请重试。');
                     eventSource.close();
                     messageInput.disabled = false;
                     document.getElementById('sendButton').disabled = false;
@@ -301,13 +742,18 @@
             } catch (error) {
                 console.error('发送消息失败:', error);
                 hideTypingIndicator();
-                addMessage('assistant', '抱歉，发送消息失败，请重试。');
+                addMessage('assistant', '❌ 抱歉，发送消息失败，请重试。');
                 messageInput.disabled = false;
                 document.getElementById('sendButton').disabled = false;
             }
         }
         
-        // 添加消息到聊天界面
+        /**
+         * 添加消息到聊天界面
+         * @param {string} role - 消息角色 ('user' 或 'assistant')
+         * @param {string} content - 消息内容
+         * @returns {HTMLElement} 消息内容元素
+         */
         function addMessage(role, content) {
             const chatMessages = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
@@ -315,7 +761,22 @@
             
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
-            contentDiv.textContent = content;
+            
+            // 如果是AI消息且包含Markdown格式，则渲染Markdown
+            if (role === 'assistant' && (content.includes('```') || content.includes('**') || content.includes('##') || content.includes('- ') || content.includes('1. '))) {
+                try {
+                    contentDiv.innerHTML = marked.parse(content);
+                    // 对代码块进行语法高亮
+                    contentDiv.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
+                } catch (error) {
+                    console.warn('Markdown解析失败，使用纯文本显示:', error);
+                    contentDiv.textContent = content;
+                }
+            } else {
+                contentDiv.textContent = content;
+            }
             
             messageDiv.appendChild(contentDiv);
             chatMessages.appendChild(messageDiv);
@@ -324,21 +785,60 @@
             return contentDiv;
         }
         
-        // 显示输入指示器
+        /**
+         * 显示AI思考指示器
+         */
         function showTypingIndicator() {
-            document.getElementById('typingIndicator').style.display = 'block';
+            const indicator = document.getElementById('typingIndicator');
+            indicator.style.display = 'flex';
             scrollToBottom();
         }
         
-        // 隐藏输入指示器
+        /**
+         * 隐藏AI思考指示器
+         */
         function hideTypingIndicator() {
             document.getElementById('typingIndicator').style.display = 'none';
         }
         
-        // 滚动到底部
+        /**
+         * 滚动聊天区域到底部
+         */
         function scrollToBottom() {
             const chatMessages = document.getElementById('chatMessages');
             chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        /**
+         * 清除当前会话的对话历史
+         */
+        async function clearHistory() {
+            if (!currentSessionId) {
+                alert('没有活动的会话');
+                return;
+            }
+            
+            if (!confirm('确定要清除当前会话的对话历史吗？此操作不可撤销。')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/chat/history/${currentSessionId}?user_id=${userId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                     // 清除前端显示的消息
+                     document.getElementById('chatMessages').innerHTML = '';
+                     addMessage('assistant', '✅ 对话历史已清除，您可以开始新的对话了。');
+                } else {
+                    const error = await response.json();
+                    alert('清除失败: ' + (error.detail || '未知错误'));
+                }
+            } catch (error) {
+                console.error('清除历史时出错:', error);
+                alert('清除失败: ' + error.message);
+            }
         }
         
         // 回车发送消息
@@ -353,9 +853,71 @@
         document.getElementById('roleSelect').addEventListener('change', function() {
             if (currentSessionId) {
                 const roleName = this.options[this.selectedIndex].text;
-                addMessage('assistant', `已切换到${roleName}模式，我将以新的角色为您服务。`);
+                addMessage('assistant', `🔄 已切换到${roleName}模式，我将以新的角色为您服务。`);
             }
         });
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 配置marked.js选项
+            if (typeof marked !== 'undefined') {
+                marked.setOptions({
+                    highlight: function(code, lang) {
+                        if (lang && hljs.getLanguage(lang)) {
+                            try {
+                                return hljs.highlight(code, { language: lang }).value;
+                            } catch (err) {}
+                        }
+                        return hljs.highlightAuto(code).value;
+                    },
+                    breaks: true,
+                    gfm: true
+                });
+            }
+            
+            // 为按钮添加点击波纹效果
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.cssText = `
+                        position: absolute;
+                        width: ${size}px;
+                        height: ${size}px;
+                        left: ${x}px;
+                        top: ${y}px;
+                        background: rgba(255, 255, 255, 0.3);
+                        border-radius: 50%;
+                        transform: scale(0);
+                        animation: ripple 0.6s linear;
+                        pointer-events: none;
+                    `;
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+        });
+        
+        // 添加波纹动画CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
