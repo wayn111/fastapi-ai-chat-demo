@@ -10,7 +10,7 @@ import time
 import uuid
 import logging
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Query
@@ -18,10 +18,14 @@ from fastapi.responses import StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import redis
-from openai import OpenAI
-from config import config
+
+from config import Config
+from ai_providers.factory import AIProviderFactory, MultiProviderManager
 
 # 配置日志系统
+# 创建配置实例
+config = Config()
+
 # 创建日志目录（如果不存在）
 os.makedirs(config.LOG_DIR, exist_ok=True)
 
@@ -54,11 +58,11 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Redis连接配置
 try:
-    redis_client = redis.Redis(**config.get_redis_config())
+    redis_client = redis.Redis(**Config.get_redis_config())
     
     # 测试Redis连接
     redis_client.ping()
-    logger.info(f"Redis连接成功 - 主机: {config.REDIS_HOST}:{config.REDIS_PORT}")
+    logger.info(f"Redis连接成功 - 主机: {Config.REDIS_HOST}:{Config.REDIS_PORT}")
     REDIS_AVAILABLE = True
 except Exception as e:
     logger.error(f"Redis连接失败: {e}")
@@ -66,11 +70,15 @@ except Exception as e:
     redis_client = None
     REDIS_AVAILABLE = False
 
-# 验证配置并初始化OpenAI客户端
+# 全局变量声明
+ai_manager = None
+
+# 验证配置并初始化AI提供商管理器
 try:
-    config.validate_config()
-    client = OpenAI(**config.get_openai_config())
-    logger.info("OpenAI客户端初始化成功")
+    Config.validate_config()
+    ai_manager = MultiProviderManager(Config.get_all_ai_configs())
+    logger.info(f"AI提供商管理器初始化成功，默认提供商: {Config.DEFAULT_AI_PROVIDER}")
+    logger.info(f"可用提供商: {Config.get_configured_providers()}")
 except ValueError as e:
     logger.error(f"配置验证失败: {e}")
     raise
@@ -87,6 +95,7 @@ class ChatRequest(BaseModel):
     user_id: str
     message: str
     session_id: str = None
+    provider: Optional[str] = None  # AI提供商选择，如果不指定则使用默认提供商
 
 class ChatResponse(BaseModel):
     """聊天响应模型"""
@@ -111,10 +120,7 @@ AI_ROLES = {
 }
 
 # 对话相关常量（从配置模块获取）
-MAX_HISTORY_MESSAGES = config.MAX_HISTORY_MESSAGES
-MAX_MESSAGE_LENGTH = config.MAX_MESSAGE_LENGTH
-CONVERSATION_EXPIRE_TIME = config.CONVERSATION_EXPIRE_TIME
-SESSION_EXPIRE_TIME = config.SESSION_EXPIRE_TIME
+# 这些常量已经不再需要，直接使用config实例访问
 
 # 内存存储（当Redis不可用时使用）
 MEMORY_STORAGE = {
@@ -153,17 +159,17 @@ async def save_message_to_redis(user_id: str, session_id: str, message: ChatMess
             redis_client.lpush(conversation_key, json.dumps(message_data))
             
             # 设置过期时间
-            redis_client.expire(conversation_key, CONVERSATION_EXPIRE_TIME)
+            redis_client.expire(conversation_key, config.CONVERSATION_EXPIRE_TIME)
             
             # 更新用户会话列表
             sessions_key = get_user_sessions_key(user_id)
             session_info = {
                 "session_id": session_id,
-                "last_message": message.content[:MAX_MESSAGE_LENGTH] + "..." if len(message.content) > MAX_MESSAGE_LENGTH else message.content,
+                "last_message": message.content[:config.MAX_MESSAGE_LENGTH] + "..." if len(message.content) > config.MAX_MESSAGE_LENGTH else message.content,
                 "last_timestamp": message.timestamp
             }
             redis_client.hset(sessions_key, session_id, json.dumps(session_info))
-            redis_client.expire(sessions_key, SESSION_EXPIRE_TIME)
+            redis_client.expire(sessions_key, config.SESSION_EXPIRE_TIME)
             
             logger.info(f"消息已保存到Redis - 用户: {user_id}, 会话: {session_id[:8]}..., 角色: {message.role}, 内容长度: {len(message.content)}")
         else:
@@ -181,7 +187,7 @@ async def save_message_to_redis(user_id: str, session_id: str, message: ChatMess
             
             MEMORY_STORAGE["sessions"][user_id][session_id] = {
                 "session_id": session_id,
-                "last_message": message.content[:MAX_MESSAGE_LENGTH] + "..." if len(message.content) > MAX_MESSAGE_LENGTH else message.content,
+                "last_message": message.content[:config.MAX_MESSAGE_LENGTH] + "..." if len(message.content) > config.MAX_MESSAGE_LENGTH else message.content,
                 "last_timestamp": message.timestamp
             }
             
@@ -219,43 +225,54 @@ async def get_conversation_history(user_id: str, session_id: str) -> List[Dict[s
         logger.error(f"获取对话历史失败 - 用户: {user_id}, 会话: {session_id[:8]}..., 错误: {e}")
         return []
 
-async def generate_ai_response(messages: List[Dict[str, Any]], role: str = "assistant") -> str:
+async def generate_ai_response(messages: List[Dict[str, Any]], role: str = "assistant", provider: Optional[str] = None) -> str:
     """调用AI模型生成响应"""
-    logger.info(f"开始生成AI响应 - 角色: {role}, 历史消息数: {len(messages)}")
+    logger.info(f"开始生成AI响应 - 角色: {role}, 历史消息数: {len(messages)}, 提供商: {provider}")
     
     # 构建系统提示
     system_prompt = AI_ROLES.get(role, AI_ROLES["assistant"])["prompt"]
     
     # 构建消息列表
-    openai_messages = [{"role": "system", "content": system_prompt}]
+    formatted_messages = [{"role": "system", "content": system_prompt}]
     
     # 添加历史消息（只保留最近的对话）
-    recent_messages = messages[-MAX_HISTORY_MESSAGES:] if len(messages) > MAX_HISTORY_MESSAGES else messages
+    recent_messages = messages[-config.MAX_HISTORY_MESSAGES:] if len(messages) > config.MAX_HISTORY_MESSAGES else messages
     for msg in recent_messages:
         if msg["role"] in ["user", "assistant"]:
-            openai_messages.append({
+            formatted_messages.append({
                 "role": msg["role"],
                 "content": msg["content"]
             })
     
     try:
-        logger.info(f"调用OpenAI API - 消息数: {len(openai_messages)}")
-        response = client.chat.completions.create(
-            model=config.OPENAI_MODEL,
-            messages=openai_messages,
-            max_tokens=config.OPENAI_MAX_TOKENS,
-            temperature=config.OPENAI_TEMPERATURE
+        logger.info(f"调用AI API - 消息数: {len(formatted_messages)}, 提供商: {provider or '默认'}")
+        
+        # 将字典格式的消息转换为AIMessage对象
+        from ai_providers.base import AIMessage
+        ai_messages = []
+        for msg in formatted_messages[1:]:  # 跳过系统消息
+            ai_messages.append(AIMessage(
+                role=msg["role"],
+                content=msg["content"],
+                timestamp=time.time()
+            ))
+        
+        # 使用回退机制生成响应
+        response = await ai_manager.generate_response_with_fallback(
+            messages=ai_messages,
+            preferred_provider=provider,
+            system_prompt=system_prompt
         )
-        ai_response = response.choices[0].message.content
+        ai_response = response.content
         logger.info(f"AI响应生成成功 - 响应长度: {len(ai_response)}")
         return ai_response
     except Exception as e:
         logger.error(f"AI响应生成失败: {e}")
         return f"抱歉，AI服务暂时不可用：{str(e)}"
 
-async def generate_streaming_response(user_id: str, session_id: str, user_message: str, role: str = "assistant"):
+async def generate_streaming_response(user_id: str, session_id: str, user_message: str, role: str = "assistant", provider: Optional[str] = None, model: Optional[str] = None):
     """生成流式响应"""
-    logger.info(f"开始流式响应 - 用户: {user_id}, 会话: {session_id[:8]}..., 角色: {role}, 消息长度: {len(user_message)}")
+    logger.info(f"开始流式响应 - 用户: {user_id}, 会话: {session_id[:8]}..., 角色: {role}, 消息长度: {len(user_message)}, 提供商: {provider}")
     
     try:
         # 保存用户消息
@@ -272,36 +289,35 @@ async def generate_streaming_response(user_id: str, session_id: str, user_messag
         # 构建系统提示
         system_prompt = AI_ROLES.get(role, AI_ROLES["assistant"])["prompt"]
         
-        # 构建消息列表
-        openai_messages = [{"role": "system", "content": system_prompt}]
+        # 构建AIMessage对象列表
+        from ai_providers.base import AIMessage
+        ai_messages = []
         
         # 添加历史消息
-        recent_messages = history[-MAX_HISTORY_MESSAGES:] if len(history) > MAX_HISTORY_MESSAGES else history
+        recent_messages = history[-config.MAX_HISTORY_MESSAGES:] if len(history) > config.MAX_HISTORY_MESSAGES else history
         for msg in recent_messages:
             if msg["role"] in ["user", "assistant"]:
-                openai_messages.append({
-                    "role": msg["role"],
-                    "content": msg["content"]
-                })
+                ai_messages.append(AIMessage(
+                    role=msg["role"],
+                    content=msg["content"],
+                    timestamp=msg.get("timestamp", time.time())
+                ))
         
-        # 调用OpenAI流式API
-        logger.info(f"调用OpenAI流式API - 消息数: {len(openai_messages)}")
-        response = client.chat.completions.create(
-            model=config.OPENAI_MODEL,
-            messages=openai_messages,
-            max_tokens=config.OPENAI_MAX_TOKENS,
-            temperature=config.OPENAI_TEMPERATURE,
-            stream=True
-        )
+        # 调用AI流式API
+        logger.info(f"调用AI流式API - 消息数: {len(ai_messages)}, 提供商: {provider or '默认'}, 模型: {model or '默认'}")
         
         full_response = ""
         chunk_count = 0
-        for chunk in response:
-            if chunk.choices[0].delta.content:
-                content = chunk.choices[0].delta.content
-                full_response += content
+        async for chunk in ai_manager.generate_streaming_response(
+            messages=ai_messages,
+            provider=provider,
+            model=model,
+            system_prompt=system_prompt
+        ):
+            if chunk:
+                full_response += chunk
                 chunk_count += 1
-                yield f"data: {json.dumps({'content': content, 'type': 'chunk'})}\n\n"
+                yield chunk
         
         logger.info(f"流式响应完成 - 用户: {user_id}, 会话: {session_id[:8]}..., 块数: {chunk_count}, 总长度: {len(full_response)}")
         
@@ -366,17 +382,19 @@ async def chat_stream(
     user_id: str = Query(..., description="用户ID"),
     session_id: str = Query(..., description="会话ID"),
     message: str = Query(..., description="用户消息"),
-    role: str = Query("assistant", description="AI角色")
+    role: str = Query("assistant", description="AI角色"),
+    provider: Optional[str] = Query(None, description="AI提供商"),
+    model: Optional[str] = Query(None, description="AI模型")
 ):
     """流式聊天接口"""
-    logger.info(f"流式聊天请求 - 用户: {user_id}, 会话: {session_id[:8]}..., 角色: {role}, 消息长度: {len(message)}")
+    logger.info(f"流式聊天请求 - 用户: {user_id}, 会话: {session_id[:8]}..., 角色: {role}, 消息长度: {len(message)}, 提供商: {provider}")
     
     if role not in AI_ROLES:
         logger.warning(f"不支持的AI角色: {role}")
         raise HTTPException(status_code=400, detail="不支持的AI角色")
     
     return StreamingResponse(
-        generate_streaming_response(user_id, session_id, message, role),
+        generate_streaming_response(user_id, session_id, message, role, provider, model),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -461,6 +479,34 @@ async def get_ai_roles():
         ]
     }
 
+@app.get("/providers")
+async def get_providers():
+    """获取可用的AI提供商列表"""
+    logger.info("获取AI提供商列表")
+    try:
+        configured_providers = Config.get_configured_providers()
+        all_models = ai_manager.get_all_available_models()
+        
+        providers_info = []
+        for provider in configured_providers:
+            provider_obj = ai_manager.get_provider(provider)
+            if provider_obj:
+                providers_info.append({
+                    "id": provider,
+                    "name": provider_obj.get_provider_name(),
+                    "models": provider_obj.get_available_models(),
+                    "is_default": provider == Config.DEFAULT_AI_PROVIDER
+                })
+        
+        return {
+            "providers": providers_info,
+            "default_provider": Config.DEFAULT_AI_PROVIDER,
+            "all_models": all_models
+        }
+    except Exception as e:
+        logger.error(f"获取AI提供商列表失败: {e}")
+        raise HTTPException(status_code=500, detail=f"获取提供商列表失败: {str(e)}")
+
 @app.delete("/chat/session/{session_id}")
 async def delete_session(
     session_id: str,
@@ -532,7 +578,7 @@ async def clear_conversation_history(
                 "last_timestamp": time.time()
             }
             redis_client.hset(sessions_key, session_id, json.dumps(session_info))
-            redis_client.expire(sessions_key, SESSION_EXPIRE_TIME)
+            redis_client.expire(sessions_key, config.SESSION_EXPIRE_TIME)
             
             logger.info(f"对话历史已从Redis清除 - 用户: {user_id}, 会话: {session_id[:8]}...")
         else:
