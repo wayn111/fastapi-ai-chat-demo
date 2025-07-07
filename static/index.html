@@ -428,7 +428,7 @@
             content: attr(data-icon);
         }
 
-        .message-content {
+        .message-content-wrapper {
             max-width: 70%;
             padding: 12px 16px;
             border-radius: 12px;
@@ -438,13 +438,13 @@
             position: relative;
         }
 
-        .message.user .message-content {
+        .message.user .message-content-wrapper {
             background: #3b82f6;
             color: white;
             border-bottom-right-radius: 4px;
         }
 
-        .message.user .message-content::before {
+        .message.user .message-content-wrapper::before {
             content: '';
             position: absolute;
             bottom: 0;
@@ -457,7 +457,7 @@
             border-right: none;
         }
 
-        .message.assistant .message-content {
+        .message.assistant .message-content-wrapper {
             background: white;
             color: #374151;
             border: 1px solid #e2e8f0;
@@ -467,16 +467,17 @@
         /* 深度思考内容样式 - 引用文本样式 */
         .message.assistant .message-content.reasoning-content {
             background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-left: 4px solid #667eea;
-            border-radius: 8px;
-            padding: 16px 20px 16px 24px;
-            margin: 12px 0;
+            padding: 0;
             font-style: italic;
             color: #64748b;
             position: relative;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .message.assistant .message-content.reasoning-content .reasoning-body {
+            padding: 16px 20px 16px 24px;
         }
 
         .message.assistant .message-content.reasoning-content p {
@@ -499,33 +500,33 @@
         }
 
         /* Markdown内容样式 */
-        .message-content h1, .message-content h2, .message-content h3,
-        .message-content h4, .message-content h5, .message-content h6 {
+        .message-content-wrapper h1, .message-content-wrapper h2, .message-content-wrapper h3,
+        .message-content-wrapper h4, .message-content-wrapper h5, .message-content-wrapper h6 {
             margin: 12px 0 8px 0;
             font-weight: 600;
             line-height: 1.3;
         }
 
-        .message-content h1 { font-size: 1.5em; }
-        .message-content h2 { font-size: 1.3em; }
-        .message-content h3 { font-size: 1.1em; }
+        .message-content-wrapper h1 { font-size: 1.5em; }
+        .message-content-wrapper h2 { font-size: 1.3em; }
+        .message-content-wrapper h3 { font-size: 1.1em; }
 
-        .message-content p {
+        .message-content-wrapper p {
             margin: 8px 0;
             line-height: 1.6;
         }
 
-        .message-content ul, .message-content ol {
+        .message-content-wrapper ul, .message-content-wrapper ol {
             margin: 8px 0;
             padding-left: 20px;
         }
 
-        .message-content li {
+        .message-content-wrapper li {
             margin: 4px 0;
             line-height: 1.5;
         }
 
-        .message-content blockquote {
+        .message-content-wrapper blockquote {
             margin: 12px 0;
             padding: 8px 16px;
             border-left: 4px solid #667eea;
@@ -533,7 +534,7 @@
             border-radius: 0 8px 8px 0;
         }
 
-        .message-content code {
+        .message-content-wrapper code {
             background: rgba(102, 126, 234, 0.1);
             padding: 2px 6px;
             border-radius: 4px;
@@ -541,7 +542,7 @@
             font-size: 0.9em;
         }
 
-        .message-content pre {
+        .message-content-wrapper pre {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
             border-radius: 8px;
@@ -553,46 +554,46 @@
             line-height: 1.4;
         }
 
-        .message-content pre code {
+        .message-content-wrapper pre code {
             background: none;
             padding: 0;
             border-radius: 0;
         }
 
-        .message-content table {
+        .message-content-wrapper table {
             border-collapse: collapse;
             width: 100%;
             margin: 12px 0;
             font-size: 0.9em;
         }
 
-        .message-content th, .message-content td {
+        .message-content-wrapper th, .message-content-wrapper td {
             border: 1px solid #e5e7eb;
             padding: 8px 12px;
             text-align: left;
         }
 
-        .message-content th {
+        .message-content-wrapper th {
             background: rgba(102, 126, 234, 0.1);
             font-weight: 600;
         }
 
-        .message-content a {
+        .message-content-wrapper a {
             color: #667eea;
             text-decoration: none;
         }
 
-        .message-content a:hover {
+        .message-content-wrapper a:hover {
             text-decoration: underline;
         }
 
-        .message-content hr {
+        .message-content-wrapper hr {
             border: none;
             border-top: 2px solid rgba(102, 126, 234, 0.2);
             margin: 16px 0;
         }
 
-        .message.assistant .message-content::before {
+        .message.assistant .message-content-wrapper::before {
             content: '';
             position: absolute;
             bottom: 0;
@@ -605,7 +606,7 @@
             border-left: none;
         }
 
-        .message.assistant .message-content::after {
+        .message.assistant .message-content-wrapper::after {
             content: '';
             position: absolute;
             bottom: -2px;
@@ -830,7 +831,7 @@
                 padding: 16px;
             }
 
-            .message-content {
+            .message-content-wrapper {
                 max-width: 85%;
                 padding: 12px 16px;
                 font-size: 14px;
@@ -861,7 +862,7 @@
         }
 
         @media (max-width: 480px) {
-            .message-content {
+            .message-content-wrapper {
                 max-width: 90%;
                 padding: 10px 14px;
                 font-size: 13px;
@@ -882,7 +883,7 @@
                 background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
             }
 
-            .message.assistant .message-content {
+            .message.assistant .message-content-wrapper {
                 background: #374151;
                 color: #f3f4f6;
                 border-color: rgba(102, 126, 234, 0.3);
@@ -972,7 +973,7 @@
             <div class="chat-messages" id="chatMessages">
                 <div class="message assistant">
                     <div class="message-avatar">🤖</div>
-                    <div class="message-content">
+                    <div class="message-content-wrapper">
                         👋 欢迎使用FastAPI AI聊天演示！请从左侧选择一个AI模型开始对话。
                     </div>
                 </div>
@@ -1262,6 +1263,7 @@
 
                 let reasoningMessage = '';
                 let contentMessage = '';
+                let messageContainer = null;
                 let reasoningElement = null;
                 let contentElement = null;
                 let hasShownTypingIndicator = false;
@@ -1275,52 +1277,60 @@
                             const thinkingElement = getThinkingMessageElement();
                             if (thinkingElement) {
                                 hideTypingIndicator();
+                                // 获取消息容器
+                                messageContainer = thinkingElement.parentElement;
                             }
                             hasShownTypingIndicator = true;
                         }
 
+                        // 如果还没有消息容器，创建一个
+                        if (!messageContainer) {
+                            messageContainer = createMessageContainer('assistant');
+                            document.getElementById('chatMessages').appendChild(messageContainer);
+                        }
+
                         // 根据类型处理内容
                         if (data.type === 'reasoning') {
-                            // 深度思考内容，使用转换后的思考消息或创建新消息
+                            // 深度思考内容
                             if (!reasoningElement) {
-                                const thinkingElement = getThinkingMessageElement();
-                                if (thinkingElement) {
-                                    // 使用转换后的思考消息
-                                    reasoningElement = thinkingElement;
-                                    reasoningElement.classList.add('reasoning-content');
-                                    clearThinkingMessageReference();
-                                } else {
-                                    // 创建新的思考消息
-                                    reasoningElement = addMessage('assistant', '', true);
-                                }
+                                reasoningElement = document.createElement('div');
+                                reasoningElement.className = 'message-content reasoning-content';
+
+                                // 创建reasoning-body容器
+                                const reasoningBody = document.createElement('div');
+                                reasoningBody.className = 'reasoning-body';
+                                reasoningElement.appendChild(reasoningBody);
+
+                                // 将reasoning元素添加到消息容器的content wrapper中
+                                const contentWrapper = messageContainer.querySelector('.message-content-wrapper');
+                                contentWrapper.appendChild(reasoningElement);
                             }
                             reasoningMessage += data.content;
 
                             // 实时渲染思考内容
+                            const reasoningBody = reasoningElement.querySelector('.reasoning-body');
+
                             if (reasoningMessage.includes('```') || reasoningMessage.includes('**') || reasoningMessage.includes('##') || reasoningMessage.includes('- ') || reasoningMessage.includes('1. ')) {
                                 try {
-                                    reasoningElement.innerHTML = marked.parse(reasoningMessage);
-                                    reasoningElement.querySelectorAll('pre code').forEach((block) => {
+                                    reasoningBody.innerHTML = marked.parse(reasoningMessage);
+                                    reasoningBody.querySelectorAll('pre code').forEach((block) => {
                                         hljs.highlightElement(block);
                                     });
                                 } catch (error) {
-                                    reasoningElement.textContent = reasoningMessage;
+                                    reasoningBody.textContent = reasoningMessage;
                                 }
                             } else {
-                                reasoningElement.textContent = reasoningMessage;
+                                reasoningBody.textContent = reasoningMessage;
                             }
                         } else {
-                            // 普通内容，使用转换后的思考消息或创建新消息
+                            // 普通内容
                             if (!contentElement) {
-                                const thinkingElement = getThinkingMessageElement();
-                                if (thinkingElement) {
-                                    // 使用转换后的思考消息
-                                    contentElement = thinkingElement;
-                                    clearThinkingMessageReference();
-                                } else {
-                                    // 创建新的回答消息
-                                    contentElement = addMessage('assistant', '', false);
-                                }
+                                contentElement = document.createElement('div');
+                                contentElement.className = 'message-content';
+
+                                // 将content元素添加到消息容器的content wrapper中
+                                const contentWrapper = messageContainer.querySelector('.message-content-wrapper');
+                                contentWrapper.appendChild(contentElement);
                             }
                             contentMessage += data.content;
 
@@ -1395,27 +1405,49 @@
             }
 
             const contentDiv = document.createElement('div');
-            contentDiv.className = 'message-content';
+            contentDiv.className = 'message-content-wrapper';
 
-            // 如果是深度思考内容，添加特殊样式
+            // 如果是深度思考内容，添加特殊样式和结构
             if (isReasoning) {
                 contentDiv.classList.add('reasoning-content');
-            }
 
-            // 如果是AI消息且包含Markdown格式，则渲染Markdown
-            if (role === 'assistant' && (content.includes('```') || content.includes('**') || content.includes('##') || content.includes('- ') || content.includes('1. '))) {
-                try {
-                    contentDiv.innerHTML = marked.parse(content);
-                    // 对代码块进行语法高亮
-                    contentDiv.querySelectorAll('pre code').forEach((block) => {
-                        hljs.highlightElement(block);
-                    });
-                } catch (error) {
-                    console.warn('Markdown解析失败，使用纯文本显示:', error);
+                // 创建reasoning-body容器
+                const reasoningBody = document.createElement('div');
+                reasoningBody.className = 'reasoning-body';
+
+                // 如果是AI消息且包含Markdown格式，则渲染Markdown
+                if (role === 'assistant' && (content.includes('```') || content.includes('**') || content.includes('##') || content.includes('- ') || content.includes('1. '))) {
+                    try {
+                        reasoningBody.innerHTML = marked.parse(content);
+                        // 对代码块进行语法高亮
+                        reasoningBody.querySelectorAll('pre code').forEach((block) => {
+                            hljs.highlightElement(block);
+                        });
+                    } catch (error) {
+                        console.warn('Markdown解析失败，使用纯文本显示:', error);
+                        reasoningBody.textContent = content;
+                    }
+                } else {
+                    reasoningBody.textContent = content;
+                }
+
+                contentDiv.appendChild(reasoningBody);
+            } else {
+                // 普通内容处理
+                if (role === 'assistant' && (content.includes('```') || content.includes('**') || content.includes('##') || content.includes('- ') || content.includes('1. '))) {
+                    try {
+                        contentDiv.innerHTML = marked.parse(content);
+                        // 对代码块进行语法高亮
+                        contentDiv.querySelectorAll('pre code').forEach((block) => {
+                            hljs.highlightElement(block);
+                        });
+                    } catch (error) {
+                        console.warn('Markdown解析失败，使用纯文本显示:', error);
+                        contentDiv.textContent = content;
+                    }
+                } else {
                     contentDiv.textContent = content;
                 }
-            } else {
-                contentDiv.textContent = content;
             }
 
             messageDiv.appendChild(avatarDiv);
@@ -1458,7 +1490,7 @@
             avatarDiv.setAttribute('data-icon', icon);
 
             const contentDiv = document.createElement('div');
-            contentDiv.className = 'message-content thinking-message-content';
+            contentDiv.className = 'message-content-wrapper thinking-message-content';
 
             // 创建思考内容
             const thinkingContent = document.createElement('div');
@@ -1508,10 +1540,10 @@
 
             // 将思考消息转换为普通消息容器
             if (thinkingMessageElement) {
-                const contentDiv = thinkingMessageElement.querySelector('.message-content');
+                const contentDiv = thinkingMessageElement.querySelector('.message-content-wrapper');
                 if (contentDiv) {
                     // 移除思考样式，准备接收实际内容
-                    contentDiv.className = 'message-content';
+                    contentDiv.className = 'message-content-wrapper';
                     contentDiv.innerHTML = '';
                 }
                 // 移除ID，避免重复
@@ -1520,12 +1552,41 @@
         }
 
         /**
+         * 创建消息容器
+         * @param {string} role - 消息角色 ('user' 或 'assistant')
+         * @returns {HTMLElement} 消息容器元素
+         */
+        function createMessageContainer(role) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            // 创建头像
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'message-avatar';
+
+            // 如果是assistant消息，设置当前助手类型的图标
+            if (role === 'assistant') {
+                const icon = getAssistantIcon(currentAssistantType);
+                avatarDiv.setAttribute('data-icon', icon);
+            }
+
+            // 创建内容包装器
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'message-content-wrapper';
+
+            messageDiv.appendChild(avatarDiv);
+            messageDiv.appendChild(contentWrapper);
+
+            return messageDiv;
+        }
+
+        /**
          * 获取当前的思考消息元素
          * @returns {HTMLElement|null} 思考消息的内容元素
          */
         function getThinkingMessageElement() {
             if (thinkingMessageElement) {
-                const contentDiv = thinkingMessageElement.querySelector('.message-content');
+                const contentDiv = thinkingMessageElement.querySelector('.message-content-wrapper');
                 return contentDiv;
             }
             return null;
