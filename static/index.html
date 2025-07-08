@@ -68,81 +68,7 @@
             font-size: 16px;
         }
 
-        .assistant-section {
-            padding: 20px;
-            flex: 1;
-            overflow-y: auto;
-        }
 
-        .section-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #64748b;
-            margin-bottom: 16px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .assistant-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .assistant-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 1px solid transparent;
-        }
-
-        .assistant-item:hover {
-            background: #f1f5f9;
-        }
-
-        .assistant-item.active {
-            background: #eff6ff;
-            border-color: #3b82f6;
-        }
-
-        .assistant-item.active .assistant-icon {
-            background: #3b82f6;
-            color: white;
-        }
-
-        .assistant-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            flex-shrink: 0;
-            background: #f1f5f9;
-            transition: all 0.2s ease;
-        }
-
-        .assistant-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .assistant-name {
-            font-size: 14px;
-            font-weight: 500;
-            color: #1e293b;
-            margin-bottom: 2px;
-        }
-
-        .assistant-desc {
-            font-size: 12px;
-            color: #64748b;
-        }
 
         .assistant-section {
             padding: 20px;
@@ -468,16 +394,15 @@
         .message.assistant .message-content.reasoning-content {
             background: #f8fafc;
             padding: 0;
-            font-style: italic;
             color: #64748b;
             position: relative;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            line-height: 1.6;
+            line-height: 2;
             margin-bottom: 15px;
         }
 
         .message.assistant .message-content.reasoning-content .reasoning-body {
-            padding: 16px 20px 16px 24px;
+            padding: 16px 20px;
         }
 
         .message.assistant .message-content.reasoning-content p {
@@ -919,34 +844,7 @@
             <div class="assistant-section">
                     <div class="section-title">智能助手</div>
                     <div class="assistant-list">
-                        <div class="assistant-item active" onclick="selectAssistant('general')">
-                            <div class="assistant-icon">🤖</div>
-                            <div class="assistant-info">
-                                <div class="assistant-name">通用助手</div>
-                                <div class="assistant-desc">智能对话助手</div>
-                            </div>
-                        </div>
-                        <div class="assistant-item" onclick="selectAssistant('coding')">
-                            <div class="assistant-icon">👨‍💻</div>
-                            <div class="assistant-info">
-                                <div class="assistant-name">编程助手</div>
-                                <div class="assistant-desc">代码编写与调试</div>
-                            </div>
-                        </div>
-                        <div class="assistant-item" onclick="selectAssistant('writing')">
-                            <div class="assistant-icon">✍️</div>
-                            <div class="assistant-info">
-                                <div class="assistant-name">写作助手</div>
-                                <div class="assistant-desc">文案创作与润色</div>
-                            </div>
-                        </div>
-                        <div class="assistant-item" onclick="selectAssistant('analysis')">
-                            <div class="assistant-icon">📊</div>
-                            <div class="assistant-info">
-                                <div class="assistant-name">分析助手</div>
-                                <div class="assistant-desc">数据分析与洞察</div>
-                            </div>
-                        </div>
+                        <!-- 助手列表将通过 JavaScript 动态加载 -->
                     </div>
                 </div>
         </div>
@@ -1002,7 +900,7 @@
         let allModels = {};
         let selectedProvider = null;
         let selectedModel = null;
-        let currentAssistantType = 'general'; // 当前选中的助手类型
+        let currentAssistantType = 'assistant'; // 当前选中的助手类型
 
         /**
          * 获取可用的AI提供商列表和模型信息
@@ -1017,8 +915,7 @@
                 // 加载模型列表到选择器
                 loadModelSelector();
 
-                console.log('已加载AI提供商:', availableProviders);
-                console.log('所有模型信息:', allModels);
+
             } catch (error) {
                 console.error('加载AI提供商失败:', error);
                 const modelSelect = document.getElementById('modelSelect');
@@ -1050,7 +947,7 @@
                 }
             });
 
-            console.log('✅ 模型选择器加载完成');
+
         }
 
         /**
@@ -1065,19 +962,27 @@
             return icons[providerId] || '🤖';
         }
 
+        // 全局变量存储从接口获取的角色配置
+        let aiRolesConfig = {};
+        
         /**
          * 获取助手图标
          * @param {string} assistantType - 助手类型
          * @returns {string} 对应的图标
          */
         function getAssistantIcon(assistantType) {
-            const assistantConfig = {
-                'general': '🤖',
-                'coding': '👨‍💻',
-                'writing': '✍️',
-                'analysis': '📊'
+            // 从接口配置中获取图标，如果没有则使用默认图标
+            const roleConfig = aiRolesConfig[assistantType];
+            if (roleConfig && roleConfig.icon) {
+                return roleConfig.icon;
+            }
+            // 默认图标映射（作为后备）
+            const defaultIcons = {
+                'assistant': '🤖',
+                'teacher': '👨‍🏫',
+                'programmer': '👨‍💻'
             };
-            return assistantConfig[assistantType] || '🤖';
+            return defaultIcons[assistantType] || '🤖';
         }
 
         /**
@@ -1116,45 +1021,141 @@
             // 更新所有现有的assistant消息头像
             updateAssistantAvatars(assistantType);
 
-            // 根据助手类型设置不同的欢迎消息和图标
-            const assistantConfig = {
-                'general': {
-                    icon: '🤖',
-                    name: '通用助手',
-                    welcome: '👋 您好！我是通用AI助手，可以帮您解答各种问题、进行日常对话。有什么可以帮助您的吗？'
-                },
-                'coding': {
-                    icon: '👨‍💻',
-                    name: '编程助手',
-                    welcome: '💻 您好！我是编程助手，专门帮助您解决编程问题、代码调试、技术咨询等。请告诉我您遇到的编程问题！'
-                },
-                'writing': {
-                    icon: '✍️',
-                    name: '写作助手',
-                    welcome: '📝 您好！我是写作助手，可以帮您进行文案创作、内容润色、写作指导等。请告诉我您的写作需求！'
-                },
-                'analysis': {
-                    icon: '📊',
-                    name: '分析助手',
-                    welcome: '📈 您好！我是分析助手，专门帮助您进行数据分析、趋势洞察、逻辑推理等。请分享您需要分析的内容！'
-                }
+            // 从全局配置中获取角色信息
+            const roleConfig = aiRolesConfig[assistantType];
+            if (!roleConfig) {
+                console.error('未找到角色配置:', assistantType);
+                return;
+            }
+            
+            const config = {
+                icon: roleConfig.icon || getAssistantIcon(assistantType),
+                name: roleConfig.name,
+                welcome: `👋 您好！我是${roleConfig.name}，${roleConfig.description}`
             };
 
-            const config = assistantConfig[assistantType] || assistantConfig['general'];
-
             // 更新选中模型信息显示
-            const selectedModelInfo = document.getElementById('selectedModelInfo');
-            selectedModelInfo.innerHTML = `
-                <div class="selected-model-icon">${config.icon}</div>
-                <span>${config.name}</span>
-            `;
+            updateSelectedModelInfo(assistantType);
 
             // 开始新的对话会话
             startNewChat(config.welcome);
 
-            console.log('已选择助手类型:', assistantType, config.name);
+
         }
 
+        /**
+         * 加载AI角色配置
+         * 从后端接口获取角色列表和配置
+         */
+        async function loadAIRoles() {
+            try {
+                const response = await fetch('/roles');
+                const data = await response.json();
+                
+                // 将角色数组转换为对象格式，便于查找
+                 aiRolesConfig = {};
+                 data.roles.forEach(role => {
+                     aiRolesConfig[role.key] = {
+                         name: role.name,
+                         description: role.description,
+                         icon: role.icon || getDefaultIcon(role.key) // 使用接口返回的图标或默认图标
+                     };
+                 });
+                
+                // 渲染助手列表
+                renderAssistantList();
+                
+                console.log('AI角色配置加载成功:', aiRolesConfig);
+            } catch (error) {
+                console.error('加载AI角色配置失败:', error);
+                // 使用默认配置
+                aiRolesConfig = {
+                    'assistant': {
+                        name: '智能助手',
+                        description: '友善、专业的AI助手，能够帮助用户解答各种问题',
+                        icon: '🤖'
+                    },
+                    'teacher': {
+                        name: 'AI老师',
+                        description: '经验丰富的老师，擅长用简单易懂的方式解释复杂概念',
+                        icon: '👨‍🏫'
+                    },
+                    'programmer': {
+                        name: '编程专家',
+                        description: '资深的程序员，精通多种编程语言和技术栈',
+                        icon: '👨‍💻'
+                    }
+                };
+                renderAssistantList();
+            }
+        }
+        
+        /**
+         * 获取角色的默认图标
+         * @param {string} roleKey - 角色键名
+         * @returns {string} 默认图标
+         */
+        function getDefaultIcon(roleKey) {
+            const iconMap = {
+                'assistant': '🤖',
+                'teacher': '👨‍🏫',
+                'programmer': '👨‍💻'
+            };
+            return iconMap[roleKey] || '🤖';
+        }
+        
+        /**
+         * 渲染助手列表
+         * 根据从接口获取的角色配置动态生成助手列表
+         */
+        function renderAssistantList() {
+            const assistantList = document.querySelector('.assistant-list');
+            if (!assistantList) return;
+            
+            assistantList.innerHTML = '';
+            
+            Object.keys(aiRolesConfig).forEach((roleKey, index) => {
+                const role = aiRolesConfig[roleKey];
+                const assistantItem = document.createElement('div');
+                assistantItem.className = `assistant-item ${index === 0 ? 'active' : ''}`;
+                assistantItem.onclick = () => selectAssistant(roleKey);
+                
+                assistantItem.innerHTML = `
+                    <div class="assistant-icon">${role.icon}</div>
+                    <div class="assistant-info">
+                        <div class="assistant-name">${role.name}</div>
+                        <div class="assistant-desc">${role.description}</div>
+                    </div>
+                `;
+                
+                assistantList.appendChild(assistantItem);
+            });
+            
+            // 默认选择第一个助手
+            const firstRoleKey = Object.keys(aiRolesConfig)[0];
+            if (firstRoleKey) {
+                currentAssistantType = firstRoleKey;
+                updateSelectedModelInfo(firstRoleKey);
+            }
+        }
+        
+        /**
+         * 更新选中模型信息显示
+         * @param {string} assistantType - 助手类型
+         */
+        function updateSelectedModelInfo(assistantType) {
+            const roleConfig = aiRolesConfig[assistantType];
+            if (!roleConfig) return;
+            
+            const selectedModelInfo = document.getElementById('selectedModelInfo');
+            if (selectedModelInfo) {
+                selectedModelInfo.innerHTML = `
+                    <div class="selected-model-icon">${roleConfig.icon}</div>
+                    <span>${roleConfig.name}</span>
+                `;
+            }
+        }
+        
         /**
          * 开始新的聊天会话
          * 创建新的会话ID并初始化聊天界面
@@ -1639,13 +1640,7 @@
             }
         }
 
-        // 回车发送消息
-        document.getElementById('messageInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
+
 
         // 模型切换提示
         document.getElementById('modelSelect').addEventListener('change', function() {
@@ -1664,6 +1659,9 @@
 
         // 页面加载完成后的初始化
         document.addEventListener('DOMContentLoaded', function() {
+            // 加载AI角色配置
+            loadAIRoles();
+            
             // 加载AI提供商列表
             loadProviders();
 
@@ -1683,49 +1681,10 @@
                 });
             }
 
-            // 为按钮添加点击波纹效果
-            const buttons = document.querySelectorAll('button');
-            buttons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    const ripple = document.createElement('span');
-                    const rect = this.getBoundingClientRect();
-                    const size = Math.max(rect.width, rect.height);
-                    const x = e.clientX - rect.left - size / 2;
-                    const y = e.clientY - rect.top - size / 2;
 
-                    ripple.style.cssText = `
-                        position: absolute;
-                        width: ${size}px;
-                        height: ${size}px;
-                        left: ${x}px;
-                        top: ${y}px;
-                        background: rgba(255, 255, 255, 0.3);
-                        border-radius: 50%;
-                        transform: scale(0);
-                        animation: ripple 0.6s linear;
-                        pointer-events: none;
-                    `;
-
-                    this.appendChild(ripple);
-
-                    setTimeout(() => {
-                        ripple.remove();
-                    }, 600);
-                });
-            });
         });
 
-        // 添加波纹动画CSS
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes ripple {
-                to {
-                    transform: scale(4);
-                    opacity: 0;
-                }
-            }
-        `;
-        document.head.appendChild(style);
+
     </script>
 </body>
 </html>

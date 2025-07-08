@@ -34,50 +34,54 @@ class Config:
     # AI提供商配置
     DEFAULT_AI_PROVIDER: str = os.getenv('DEFAULT_AI_PROVIDER', 'deepseek')
 
-    # AI提供商配置 - 统一格式
-    AI_PROVIDERS_CONFIG = {
+    # AI提供商默认配置
+    _DEFAULT_AI_CONFIG = {
+        'max_tokens': 1000,
+        'temperature': 0.7
+    }
+
+    # AI提供商基础信息
+    _AI_PROVIDERS_INFO = {
         'openai': {
-            'api_key': os.getenv('OPENAI_API_KEY', ''),
-            'base_url': os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
-            'model': os.getenv('OPENAI_MODEL', 'gpt-4o'),
-            'max_tokens': int(os.getenv('OPENAI_MAX_TOKENS', 1000)),
-            'temperature': float(os.getenv('OPENAI_TEMPERATURE', 0.7))
+            'base_url': 'https://api.openai.com/v1',
+            'model': 'gpt-4o'
         },
         'deepseek': {
-            'api_key': os.getenv('DEEPSEEK_API_KEY', ''),
-            'base_url': os.getenv('DEEPSEEK_BASE_URL', 'https://api.deepseek.com/v1'),
-            'model': os.getenv('DEEPSEEK_MODEL', 'deepseek-chat'),
-            'max_tokens': int(os.getenv('DEEPSEEK_MAX_TOKENS', 1000)),
-            'temperature': float(os.getenv('DEEPSEEK_TEMPERATURE', 0.7))
+            'base_url': 'https://api.deepseek.com/v1',
+            'model': 'deepseek-chat'
         },
         'qianwen': {
-            'api_key': os.getenv('QIANWEN_API_KEY', ''),
-            'base_url': os.getenv('QIANWEN_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1'),
-            'model': os.getenv('QIANWEN_MODEL', 'qwen-turbo'),
-            'max_tokens': int(os.getenv('QIANWEN_MAX_TOKENS', 1000)),
-            'temperature': float(os.getenv('QIANWEN_TEMPERATURE', 0.7))
+            'base_url': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+            'model': 'qwen-turbo'
         }
     }
-    
-    # 向后兼容的属性访问
-    @classmethod
-    def get_openai_api_key(cls) -> str:
-        return cls.AI_PROVIDERS_CONFIG['openai']['api_key']
-    
-    @classmethod
-    def get_deepseek_api_key(cls) -> str:
-        return cls.AI_PROVIDERS_CONFIG['deepseek']['api_key']
-    
-    @classmethod
-    def get_qianwen_api_key(cls) -> str:
-        return cls.AI_PROVIDERS_CONFIG['qianwen']['api_key']
-    
-    # 向后兼容的属性
-    OPENAI_API_KEY = property(lambda self: self.AI_PROVIDERS_CONFIG['openai']['api_key'])
-    DEEPSEEK_API_KEY = property(lambda self: self.AI_PROVIDERS_CONFIG['deepseek']['api_key'])
-    QIANWEN_API_KEY = property(lambda self: self.AI_PROVIDERS_CONFIG['qianwen']['api_key'])
 
+    @classmethod
+    def _build_provider_config(cls, provider: str) -> dict:
+        """构建单个AI提供商配置"""
+        provider_upper = provider.upper()
+        provider_info = cls._AI_PROVIDERS_INFO.get(provider, {})
 
+        return {
+            'api_key': os.getenv(f'{provider_upper}_API_KEY', ''),
+            'base_url': os.getenv(f'{provider_upper}_BASE_URL', provider_info.get('base_url', '')),
+            'model': os.getenv(f'{provider_upper}_MODEL', provider_info.get('model', '')),
+            'max_tokens': int(os.getenv(f'{provider_upper}_MAX_TOKENS', cls._DEFAULT_AI_CONFIG['max_tokens'])),
+            'temperature': float(os.getenv(f'{provider_upper}_TEMPERATURE', cls._DEFAULT_AI_CONFIG['temperature']))
+        }
+
+    # AI提供商配置 - 动态生成
+    @classmethod
+    def _get_ai_providers_config(cls) -> dict:
+        """获取所有AI提供商配置"""
+        return {provider: cls._build_provider_config(provider) for provider in cls._AI_PROVIDERS_INFO.keys()}
+
+    # 延迟初始化AI提供商配置
+    @property
+    def AI_PROVIDERS_CONFIG(self) -> dict:
+        if not hasattr(self, '_ai_providers_config'):
+            self._ai_providers_config = self._get_ai_providers_config()
+        return self._ai_providers_config
 
     # 对话配置
     MAX_HISTORY_MESSAGES: int = int(os.getenv('MAX_HISTORY_MESSAGES', 20))  # 最大历史消息数
@@ -108,25 +112,10 @@ class Config:
         return config
 
     @classmethod
-    def get_provider_config(cls, provider_name: str) -> dict:
-        """获取指定AI提供商配置"""
-        return cls.AI_PROVIDERS_CONFIG.get(provider_name, {})
-    
-    @classmethod
     def get_all_ai_configs(cls) -> dict:
-        """获取所有AI提供商配置"""
-        return {name: config for name, config in cls.AI_PROVIDERS_CONFIG.items() if config.get('api_key')}
-    
-    # 向后兼容的方法
-    @classmethod
-    def get_deepseek_config(cls) -> dict:
-        """获取DeepSeek客户端配置"""
-        return cls.get_provider_config('deepseek')
-
-    @classmethod
-    def get_qianwen_config(cls) -> dict:
-        """获取通义千问客户端配置"""
-        return cls.get_provider_config('qianwen')
+        """获取所有已配置API Key的AI提供商配置"""
+        configs = cls._get_ai_providers_config()
+        return {name: config for name, config in configs.items() if config.get('api_key')}
 
     @classmethod
     def get_log_level(cls) -> int:
@@ -157,13 +146,14 @@ class Config:
 
     @classmethod
     def get_configured_providers(cls) -> List[str]:
-        """获取已配置的AI提供商列表"""
-        return [name for name, config in cls.AI_PROVIDERS_CONFIG.items() if config.get('api_key')]
+        """获取已配置API Key的AI提供商列表"""
+        return list(cls.get_all_ai_configs().keys())
 
     @classmethod
     def get_log_file_path(cls) -> str:
         """获取日志文件完整路径"""
         return os.path.join(cls.LOG_DIR, cls.LOG_FILE)
+
 
 # 创建配置实例
 config = Config()

@@ -107,14 +107,17 @@ class ChatResponse(BaseModel):
 AI_ROLES = {
     "assistant": {
         "name": "智能助手",
+        "icon": "🤖",
         "prompt": "你是一个友善、专业的AI助手，能够帮助用户解答各种问题。请保持礼貌和耐心。"
     },
     "teacher": {
         "name": "AI老师",
+        "icon": "👨‍🏫",
         "prompt": "你是一位经验丰富的老师，擅长用简单易懂的方式解释复杂概念，善于启发学生思考。"
     },
     "programmer": {
         "name": "编程专家",
+        "icon": "👨‍💻",
         "prompt": "你是一位资深的程序员，精通多种编程语言和技术栈，能够提供专业的编程建议和解决方案。"
     }
 }
@@ -307,6 +310,7 @@ async def generate_streaming_response(user_id: str, session_id: str, user_messag
         logger.info(f"调用AI流式API - 消息数: {len(ai_messages)}, 提供商: {provider or '默认'}, 模型: {model or '默认'}")
         
         full_response = ""
+        content_only_response = ""  # 只保存 type: 'content' 的内容
         chunk_count = 0
         async for chunk in ai_manager.generate_streaming_response(
             messages=ai_messages,
@@ -317,14 +321,29 @@ async def generate_streaming_response(user_id: str, session_id: str, user_messag
             if chunk:
                 full_response += chunk
                 chunk_count += 1
+                
+                # 解析chunk数据，只保留 type: 'content' 的内容到Redis
+                try:
+                    if chunk.startswith("data: "):
+                        json_str = chunk[6:].strip()  # 移除 "data: " 前缀
+                        if json_str:
+                            chunk_data = json.loads(json_str)
+                            # 只累积 type 为 'content' 的内容用于保存到Redis
+                            if chunk_data.get('type') == 'content' and 'content' in chunk_data:
+                                content_only_response += chunk_data['content']
+                except (json.JSONDecodeError, KeyError) as e:
+                    # 如果解析失败，按原来的方式处理（向后兼容）
+                    logger.debug(f"解析chunk数据失败，使用原始内容: {e}")
+                    content_only_response += chunk
+                
                 yield chunk
         
-        logger.info(f"流式响应完成 - 用户: {user_id}, 会话: {session_id[:8]}..., 块数: {chunk_count}, 总长度: {len(full_response)}")
+        logger.info(f"流式响应完成 - 用户: {user_id}, 会话: {session_id[:8]}..., 块数: {chunk_count}, 总长度: {len(full_response)}, 内容长度: {len(content_only_response)}")
         
-        # 保存AI响应
+        # 保存AI响应（只保存 type: 'content' 的内容）
         ai_msg = ChatMessage(
             role="assistant",
-            content=full_response,
+            content=content_only_response,  # 使用过滤后的内容
             timestamp=time.time()
         )
         await save_message_to_redis(user_id, session_id, ai_msg)
@@ -474,7 +493,12 @@ async def get_ai_roles():
     logger.info("获取AI角色列表")
     return {
         "roles": [
-            {"key": key, "name": value["name"], "description": value["prompt"]}
+            {
+                "key": key, 
+                "name": value["name"], 
+                "description": value["prompt"],
+                "icon": value.get("icon", "🤖")
+            }
             for key, value in AI_ROLES.items()
         ]
     }
