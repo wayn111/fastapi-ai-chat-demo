@@ -909,6 +909,164 @@
             background-position: right 8px center;
             background-size: 12px;
             padding-right: 28px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* 自定义模型选择器样式 */
+        .custom-select-wrapper {
+            position: relative;
+            display: inline-block;
+            max-width: 70%;
+            min-width: 200px;
+        }
+        
+        .custom-select {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            position: relative;
+            gap: 8px;
+        }
+        
+        .custom-select:hover {
+            background: var(--background-hover);
+            border-color: var(--border-hover);
+        }
+        
+        .custom-select-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .custom-select-text {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+        
+        .custom-select-arrow {
+            margin-left: auto;
+            color: var(--text-tertiary);
+            font-size: 12px;
+            transition: transform 0.2s ease;
+        }
+        
+        .custom-select.open .custom-select-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .custom-select-dropdown {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--border-radius-md);
+            margin-bottom: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: var(--shadow-md);
+            display: none;
+        }
+        
+        .custom-select-dropdown.show {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .custom-option {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            gap: 8px;
+        }
+        
+        .custom-option:hover {
+            background: var(--background);
+        }
+        
+        .custom-option.selected {
+            background: var(--primary-light);
+        }
+        
+        .custom-option-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .custom-option-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .custom-option-provider {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .custom-option-model {
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* 移动设备上的样式优化 */
+        @media (max-width: 768px) {
+            .custom-select-wrapper {
+                max-width: 100%;
+                width: 100%;
+            }
+            
+            .custom-select {
+                width: 100%;
+                padding: 10px 14px;
+            }
+            
+            .custom-option {
+                padding: 12px 14px;
+            }
         }
 
         .model-selector:hover {
@@ -977,11 +1135,27 @@
                 gap: 10px;
             }
 
-            .model-selector {
+            .model-selector,
+            .custom-select-wrapper {
                 min-width: 100%;
+                width: 100%;
+                order: 1;
+            }
+            
+            .custom-select {
+                width: 100%;
                 padding: 12px 16px;
                 font-size: 14px;
-                order: 1;
+            }
+            
+            .custom-select-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 16px;
+            }
+            
+            .custom-select-text {
+                font-size: 14px;
             }
 
             .send-button {
@@ -989,6 +1163,32 @@
                 font-size: 14px;
                 flex-grow: 1;
                 order: 2;
+            }
+            
+            .custom-select-dropdown {
+                position: fixed;
+                bottom: 80px;
+                left: 16px;
+                right: 16px;
+                max-height: 50vh;
+                z-index: 1000;
+            }
+            
+            .custom-option {
+                padding: 14px 16px;
+            }
+            
+            .custom-option-icon {
+                width: 28px;
+                height: 28px;
+            }
+            
+            .custom-option-provider {
+                font-size: 14px;
+            }
+            
+            .custom-option-model {
+                font-size: 12px;
             }
         }
 
@@ -1236,9 +1436,19 @@
                 <div class="input-container">
                     <textarea id="messageInput" placeholder="💭 输入您的消息..." onkeypress="handleKeyPress(event)"></textarea>
                     <div class="input-actions">
-                        <select id="modelSelect" class="model-selector">
-                            <option value="">🔄 加载模型中...</option>
-                        </select>
+                        <div class="custom-select-wrapper">
+                            <select id="modelSelect" class="model-selector" style="display: none;">
+                                <option value="">🔄 加载模型中...</option>
+                            </select>
+                            <div id="customSelect" class="custom-select">
+                                <div class="custom-select-icon">🤖</div>
+                                <div class="custom-select-text">加载模型中...</div>
+                                <div class="custom-select-arrow">▼</div>
+                            </div>
+                            <div id="customSelectDropdown" class="custom-select-dropdown">
+                                <!-- 选项将通过JavaScript动态加载 -->
+                            </div>
+                        </div>
                         <button class="send-button" id="sendButton" onclick="sendMessage()">
                             发送
                         </button>
@@ -1292,6 +1502,9 @@
                         const option = document.createElement('option');
                         option.value = `${provider.id}:${model}`;
                         option.textContent = `${getProviderIcon(provider.id)} ${provider.name} - ${model}`;
+                        option.setAttribute('data-provider-icon', getProviderIcon(provider.id));
+                        option.setAttribute('data-provider-name', provider.name);
+                        option.setAttribute('data-model-name', model);
                         if (provider.is_default && !selectedProvider) {
                             option.selected = true;
                             selectedProvider = provider.id;
@@ -1302,7 +1515,14 @@
                 }
             });
 
+            // 如果有默认选中的模型，手动触发一次change事件以更新显示
+            if (selectedProvider && selectedModel) {
+                const event = new Event('change');
+                modelSelect.dispatchEvent(event);
+            }
 
+            // 初始化自定义选择器样式
+            styleModelSelector();
         }
 
         /**
@@ -2006,16 +2226,140 @@
 
         // 模型切换提示
         document.getElementById('modelSelect').addEventListener('change', function() {
-            if (currentSessionId && this.value) {
-                const modelName = this.options[this.selectedIndex].text;
-                addMessage('assistant', `🔄 已切换到${modelName}，我将以新的模型为您服务。`);
-
-                // 更新选中的提供商和模型
-                if (this.value.includes(':')) {
-                    [selectedProvider, selectedModel] = this.value.split(':');
+            // 更新选中的提供商和模型
+            if (this.value && this.value.includes(':')) {
+                [selectedProvider, selectedModel] = this.value.split(':');
+                
+                // 更新自定义选择器显示
+                updateCustomSelectDisplay();
+                
+                // 只有在会话已存在时才添加切换提示消息
+                if (currentSessionId) {
+                    const modelName = this.options[this.selectedIndex].text;
+                    addMessage('assistant', `🔄 已切换到${modelName}，我将以新的模型为您服务。`);
                 }
             }
         });
+        
+        /**
+         * 初始化自定义选择器样式和功能
+         */
+        function styleModelSelector() {
+            const modelSelect = document.getElementById('modelSelect');
+            const customSelect = document.getElementById('customSelect');
+            const customSelectText = customSelect.querySelector('.custom-select-text');
+            const customSelectIcon = customSelect.querySelector('.custom-select-icon');
+            const customSelectDropdown = document.getElementById('customSelectDropdown');
+            
+            // 初始化下拉选项
+            updateCustomSelectOptions();
+            
+            // 更新显示的选中项
+            updateCustomSelectDisplay();
+            
+            // 点击自定义选择器时显示/隐藏下拉菜单
+            customSelect.addEventListener('click', function(e) {
+                e.stopPropagation();
+                customSelect.classList.toggle('open');
+                customSelectDropdown.classList.toggle('show');
+            });
+            
+            // 点击页面其他地方时关闭下拉菜单
+            document.addEventListener('click', function() {
+                customSelect.classList.remove('open');
+                customSelectDropdown.classList.remove('show');
+            });
+            
+            // 阻止下拉菜单的点击事件冒泡
+            customSelectDropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+        
+        /**
+         * 更新自定义选择器的选项
+         */
+        function updateCustomSelectOptions() {
+            const modelSelect = document.getElementById('modelSelect');
+            const customSelectDropdown = document.getElementById('customSelectDropdown');
+            
+            // 清空现有选项
+            customSelectDropdown.innerHTML = '';
+            
+            // 为每个选项创建自定义选项元素
+            Array.from(modelSelect.options).forEach((option, index) => {
+                if (!option.value) {
+                    // 跳过空值选项（如"请选择模型..."）
+                    return;
+                }
+                
+                const customOption = document.createElement('div');
+                customOption.className = 'custom-option';
+                if (option.selected) {
+                    customOption.classList.add('selected');
+                }
+                
+                const providerIcon = option.getAttribute('data-provider-icon') || '🤖';
+                const providerName = option.getAttribute('data-provider-name') || '';
+                const modelName = option.getAttribute('data-model-name') || '';
+                
+                customOption.innerHTML = `
+                    <div class="custom-option-icon">${providerIcon}</div>
+                    <div class="custom-option-info">
+                        <div class="custom-option-provider">${providerName}</div>
+                        <div class="custom-option-model">${modelName}</div>
+                    </div>
+                `;
+                
+                // 点击选项时更新选择器和触发change事件
+                customOption.addEventListener('click', function() {
+                    // 先设置选中状态
+                    modelSelect.selectedIndex = index;
+                    
+                    // 更新所有选项的选中状态
+                    Array.from(customSelectDropdown.querySelectorAll('.custom-option')).forEach((opt, i) => {
+                        if (i === index - 1) { // 减1是因为跳过了第一个空选项
+                            opt.classList.add('selected');
+                        } else {
+                            opt.classList.remove('selected');
+                        }
+                    });
+                    
+                    // 触发原生select的change事件
+                    const event = new Event('change');
+                    modelSelect.dispatchEvent(event);
+                    
+                    // 关闭下拉菜单
+                    document.getElementById('customSelect').classList.remove('open');
+                    customSelectDropdown.classList.remove('show');
+                });
+                
+                customSelectDropdown.appendChild(customOption);
+            });
+        }
+        
+        /**
+         * 更新自定义选择器显示的内容
+         */
+        function updateCustomSelectDisplay() {
+            const modelSelect = document.getElementById('modelSelect');
+            const customSelect = document.getElementById('customSelect');
+            const customSelectText = customSelect.querySelector('.custom-select-text');
+            const customSelectIcon = customSelect.querySelector('.custom-select-icon');
+            
+            if (modelSelect.selectedIndex > 0) {
+                const selectedOption = modelSelect.options[modelSelect.selectedIndex];
+                const providerIcon = selectedOption.getAttribute('data-provider-icon') || '🤖';
+                const providerName = selectedOption.getAttribute('data-provider-name') || '';
+                const modelName = selectedOption.getAttribute('data-model-name') || '';
+                
+                customSelectIcon.textContent = providerIcon;
+                customSelectText.textContent = `${providerName} - ${modelName}`;
+            } else {
+                customSelectIcon.textContent = '🤖';
+                customSelectText.textContent = '请选择模型...';
+            }
+        }
 
 
 
