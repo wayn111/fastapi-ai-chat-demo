@@ -7,8 +7,9 @@
     <!-- 引入marked.js用于Markdown解析 -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- 引入highlight.js用于代码高亮 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -798,6 +799,66 @@
             }
         }
 
+        /* Markdown表格样式 */
+        .markdown-table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 12px 0;
+            font-size: 14px;
+            background: white;
+        }
+
+        .markdown-table th,
+        .markdown-table td {
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .markdown-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .markdown-table tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+
+        .markdown-table tr:hover {
+            background-color: #f1f5f9;
+        }
+
+
+
+        /* 代码块增强样式 */
+        pre {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        pre code {
+            background: transparent;
+            padding: 0;
+            border: none;
+            border-radius: 0;
+        }
+
+        /* 行内代码样式 */
+        code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #e11d48;
+        }
+
         /* 深色模式支持 */
         @media (prefers-color-scheme: dark) {
             .chat-container {
@@ -826,6 +887,30 @@
 
             .chat-input input:focus {
                 background: #374151;
+            }
+
+            .markdown-table {
+                background: #374151;
+            }
+
+            .markdown-table th {
+                background-color: #4b5563;
+                color: #f3f4f6;
+            }
+
+            .markdown-table td {
+                border-color: #6b7280;
+                color: #e5e7eb;
+            }
+
+            pre {
+                background: #1f2937;
+                border-color: #374151;
+            }
+
+            code {
+                background: #374151;
+                color: #fbbf24;
             }
         }
     </style>
@@ -1310,19 +1395,7 @@
 
                             // 实时渲染思考内容
                             const reasoningBody = reasoningElement.querySelector('.reasoning-body');
-
-                            if (reasoningMessage.includes('```') || reasoningMessage.includes('**') || reasoningMessage.includes('##') || reasoningMessage.includes('- ') || reasoningMessage.includes('1. ')) {
-                                try {
-                                    reasoningBody.innerHTML = marked.parse(reasoningMessage);
-                                    reasoningBody.querySelectorAll('pre code').forEach((block) => {
-                                        hljs.highlightElement(block);
-                                    });
-                                } catch (error) {
-                                    reasoningBody.textContent = reasoningMessage;
-                                }
-                            } else {
-                                reasoningBody.textContent = reasoningMessage;
-                            }
+                            renderMarkdownContent(reasoningMessage, reasoningBody);
                         } else {
                             // 普通内容
                             if (!contentElement) {
@@ -1336,18 +1409,7 @@
                             contentMessage += data.content;
 
                             // 实时渲染回答内容
-                            if (contentMessage.includes('```') || contentMessage.includes('**') || contentMessage.includes('##') || contentMessage.includes('- ') || contentMessage.includes('1. ')) {
-                                try {
-                                    contentElement.innerHTML = marked.parse(contentMessage);
-                                    contentElement.querySelectorAll('pre code').forEach((block) => {
-                                        hljs.highlightElement(block);
-                                    });
-                                } catch (error) {
-                                    contentElement.textContent = contentMessage;
-                                }
-                            } else {
-                                contentElement.textContent = contentMessage;
-                            }
+                            renderMarkdownContent(contentMessage, contentElement);
                         }
                         scrollToBottom();
                     } else if (data.type === 'end') {
@@ -1416,18 +1478,9 @@
                 const reasoningBody = document.createElement('div');
                 reasoningBody.className = 'reasoning-body';
 
-                // 如果是AI消息且包含Markdown格式，则渲染Markdown
-                if (role === 'assistant' && (content.includes('```') || content.includes('**') || content.includes('##') || content.includes('- ') || content.includes('1. '))) {
-                    try {
-                        reasoningBody.innerHTML = marked.parse(content);
-                        // 对代码块进行语法高亮
-                        reasoningBody.querySelectorAll('pre code').forEach((block) => {
-                            hljs.highlightElement(block);
-                        });
-                    } catch (error) {
-                        console.warn('Markdown解析失败，使用纯文本显示:', error);
-                        reasoningBody.textContent = content;
-                    }
+                // 渲染思考内容
+                if (role === 'assistant') {
+                    renderMarkdownContent(content, reasoningBody);
                 } else {
                     reasoningBody.textContent = content;
                 }
@@ -1435,17 +1488,8 @@
                 contentDiv.appendChild(reasoningBody);
             } else {
                 // 普通内容处理
-                if (role === 'assistant' && (content.includes('```') || content.includes('**') || content.includes('##') || content.includes('- ') || content.includes('1. '))) {
-                    try {
-                        contentDiv.innerHTML = marked.parse(content);
-                        // 对代码块进行语法高亮
-                        contentDiv.querySelectorAll('pre code').forEach((block) => {
-                            hljs.highlightElement(block);
-                        });
-                    } catch (error) {
-                        console.warn('Markdown解析失败，使用纯文本显示:', error);
-                        contentDiv.textContent = content;
-                    }
+                if (role === 'assistant') {
+                    renderMarkdownContent(content, contentDiv);
                 } else {
                     contentDiv.textContent = content;
                 }
@@ -1600,6 +1644,46 @@
             thinkingMessageElement = null;
         }
 
+
+
+        /**
+         * 增强的Markdown内容渲染函数
+         * @param {string} content - 要渲染的内容
+         * @param {HTMLElement} element - 目标元素
+         */
+        function renderMarkdownContent(content, element) {
+            // 检测是否包含Markdown格式
+            const hasMarkdown = content.includes('```') || 
+                               content.includes('**') || 
+                               content.includes('##') || 
+                               content.includes('- ') || 
+                               content.includes('1. ') ||
+                               content.includes('|'); // 表格
+            
+            if (hasMarkdown) {
+                try {
+                    // Markdown 渲染
+                    element.innerHTML = marked.parse(content);
+                    
+                    // 代码高亮
+                    element.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
+                    
+                    // 表格样式优化
+                    element.querySelectorAll('table').forEach((table) => {
+                        table.className = 'markdown-table';
+                    });
+                    
+                } catch (error) {
+                    console.warn('Markdown渲染失败，使用纯文本显示:', error);
+                    element.textContent = content;
+                }
+            } else {
+                element.textContent = content;
+            }
+        }
+
         /**
          * 滚动聊天区域到底部
          */
@@ -1677,9 +1761,15 @@
                         return hljs.highlightAuto(code).value;
                     },
                     breaks: true,
-                    gfm: true
+                    gfm: true,
+                    tables: true,
+                    sanitize: false,
+                    smartypants: true,
+                    xhtml: true
                 });
             }
+
+
 
 
         });

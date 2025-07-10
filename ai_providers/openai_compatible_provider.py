@@ -178,6 +178,7 @@ class OpenAICompatibleProvider(BaseAIProvider):
             'model': kwargs.get('model', self.get_config_value('model', self.DEFAULT_MODEL)),
             'messages': formatted_messages,
             'max_tokens': kwargs.get('max_tokens', self.get_config_value('max_tokens', 1000)),
+            'extra_body': {"enable_thinking": True},
             'temperature': kwargs.get('temperature', self.get_config_value('temperature', 0.7))
         }
 
