@@ -53,6 +53,10 @@ class Config:
         'qianwen': {
             'base_url': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
             'model': 'qwen-turbo'
+        },
+        'doubao': {
+            'base_url': 'https://ark.cn-beijing.volces.com/api/v3',
+            'model': 'doubao-seed-1.6-flash'
         }
     }
 
