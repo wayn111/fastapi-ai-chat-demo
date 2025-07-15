@@ -43,24 +43,19 @@ class Config:
     # AI提供商基础信息
     _AI_PROVIDERS_INFO = {
         'openai': {
-            'base_url': 'https://api.openai.com/v1',
-            'model': 'gpt-4o'
+            'icon': '🤖'
         },
         'deepseek': {
-            'base_url': 'https://api.deepseek.com/v1',
-            'model': 'deepseek-chat'
+            'icon': '🧠'
         },
         'qianwen': {
-            'base_url': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-            'model': 'qwen-turbo'
+            'icon': '🌟'
         },
         'doubao': {
-            'base_url': 'https://ark.cn-beijing.volces.com/api/v3',
-            'model': 'doubao-seed-1.6-flash'
+            'icon': '🔥'
         },
         'kimi': {
-            'base_url': 'https://api.moonshot.cn/v1',
-            'model': 'moonshot-v1-8k'
+            'icon': '🌙'
         }
     }
 
@@ -68,12 +63,22 @@ class Config:
     def _build_provider_config(cls, provider: str) -> dict:
         """构建单个AI提供商配置"""
         provider_upper = provider.upper()
-        provider_info = cls._AI_PROVIDERS_INFO.get(provider, {})
+        
+        # 默认配置映射
+        default_configs = {
+            'openai': {'base_url': 'https://api.openai.com/v1', 'model': 'gpt-4o'},
+            'deepseek': {'base_url': 'https://api.deepseek.com/v1', 'model': 'deepseek-chat'},
+            'qianwen': {'base_url': 'https://dashscope.aliyuncs.com/compatible-mode/v1', 'model': 'qwen-turbo'},
+            'doubao': {'base_url': 'https://ark.cn-beijing.volces.com/api/v3', 'model': 'doubao-seed-1-6-250615'},
+            'kimi': {'base_url': 'https://api.moonshot.cn/v1', 'model': 'moonshot-v1-8k'}
+        }
+        
+        provider_defaults = default_configs.get(provider, {})
 
         return {
             'api_key': os.getenv(f'{provider_upper}_API_KEY', ''),
-            'base_url': os.getenv(f'{provider_upper}_BASE_URL', provider_info.get('base_url', '')),
-            'model': os.getenv(f'{provider_upper}_MODEL', provider_info.get('model', '')),
+            'base_url': os.getenv(f'{provider_upper}_BASE_URL', provider_defaults.get('base_url', '')),
+            'model': os.getenv(f'{provider_upper}_MODEL', provider_defaults.get('model', '')),
             'max_tokens': int(os.getenv(f'{provider_upper}_MAX_TOKENS', cls._DEFAULT_AI_CONFIG['max_tokens'])),
             'temperature': float(os.getenv(f'{provider_upper}_TEMPERATURE', cls._DEFAULT_AI_CONFIG['temperature']))
         }
@@ -161,6 +166,16 @@ class Config:
     def get_log_file_path(cls) -> str:
         """获取日志文件完整路径"""
         return os.path.join(cls.LOG_DIR, cls.LOG_FILE)
+
+    @classmethod
+    def get_provider_icon(cls, provider: str) -> str:
+        """获取提供商图标"""
+        return cls._AI_PROVIDERS_INFO.get(provider, {}).get('icon', '🤖')
+
+    @classmethod
+    def get_all_provider_icons(cls) -> dict:
+        """获取所有提供商图标映射"""
+        return {provider: info.get('icon', '🤖') for provider, info in cls._AI_PROVIDERS_INFO.items()}
 
 
 # 创建配置实例

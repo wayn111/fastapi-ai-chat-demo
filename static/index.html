@@ -1498,6 +1498,7 @@
                 const data = await response.json();
                 availableProviders = data.providers;
                 allModels = data.all_models || {};
+                providerIcons = data.provider_icons || {};
 
                 // 加载模型列表到选择器
                 loadModelSelector();
@@ -1547,17 +1548,14 @@
             styleModelSelector();
         }
 
+        // 全局变量存储从后端获取的提供商图标配置
+        let providerIcons = {};
+        
         /**
          * 获取提供商图标
          */
         function getProviderIcon(providerId) {
-            const icons = {
-                'doubao': '🫘',
-                'deepseek': '🧠',
-                'qianwen': '🌟',
-                'openai': '🤖',
-            };
-            return icons[providerId] || '🤖';
+            return providerIcons[providerId] || '🤖';
         }
 
         // 全局变量存储从接口获取的角色配置

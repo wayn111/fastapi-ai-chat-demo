@@ -519,13 +519,15 @@ async def get_providers():
                     "id": provider,
                     "name": provider_obj.get_provider_name(),
                     "models": provider_obj.get_available_models(),
+                    "icon": Config.get_provider_icon(provider),
                     "is_default": provider == Config.DEFAULT_AI_PROVIDER
                 })
         
         return {
             "providers": providers_info,
             "default_provider": Config.DEFAULT_AI_PROVIDER,
-            "all_models": all_models
+            "all_models": all_models,
+            "provider_icons": Config.get_all_provider_icons()
         }
     except Exception as e:
         logger.error(f"获取AI提供商列表失败: {e}")

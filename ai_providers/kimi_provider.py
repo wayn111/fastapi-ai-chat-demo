@@ -19,16 +19,8 @@ class KimiProvider(OpenAICompatibleProvider):
 
     # Kimi支持的模型列表
     AVAILABLE_MODELS = [
+        "kimi-k2-0711-preview",
         "moonshot-v1-8k",
         "moonshot-v1-32k",
         "moonshot-v1-128k",
     ]
-
-    def __init__(self, config: dict):
-        """
-        初始化Kimi提供商
-
-        Args:
-            config: 提供商配置字典
-        """
-        super().__init__(config)
