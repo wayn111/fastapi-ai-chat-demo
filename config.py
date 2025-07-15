@@ -57,6 +57,10 @@ class Config:
         'doubao': {
             'base_url': 'https://ark.cn-beijing.volces.com/api/v3',
             'model': 'doubao-seed-1.6-flash'
+        },
+        'kimi': {
+            'base_url': 'https://api.moonshot.cn/v1',
+            'model': 'moonshot-v1-8k'
         }
     }
 
