@@ -15,6 +15,8 @@ class AIMessage:
     role: str
     content: str
     timestamp: float
+    image_data: Optional[str] = None  # Base64编码的图片数据
+    image_type: Optional[str] = None  # 图片类型 (jpeg, png, gif)
 
 @dataclass
 class AIResponse:

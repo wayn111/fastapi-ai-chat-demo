@@ -874,6 +874,102 @@
             width: 100%;
             gap: 12px;
         }
+        
+        .image-upload-container {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .image-upload-btn {
+            padding: 8px 12px;
+            background: var(--surface);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--border-radius-md);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .image-upload-btn:hover {
+            background: var(--background-alt);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .image-upload-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .image-preview {
+            margin-top: 8px;
+            padding: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--border-radius-md);
+            display: none;
+        }
+        
+        .image-preview.show {
+            display: block;
+        }
+        
+        .image-preview-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px;
+        }
+        
+        .image-preview-thumbnail {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+        
+        .image-preview-info {
+            flex: 1;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .image-preview-remove {
+            padding: 4px 8px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .image-preview-remove:hover {
+            background: #dc2626;
+        }
+        
+        .message-image {
+            max-width: 300px;
+            max-height: 200px;
+            border-radius: var(--border-radius-md);
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .message-image:hover {
+            transform: scale(1.02);
+            box-shadow: var(--shadow-md);
+        }
 
         .send-button {
             padding: 8px 16px;
@@ -1456,8 +1552,18 @@
             <div class="chat-input">
                 <div class="input-container">
                     <textarea id="messageInput" placeholder="💭 输入您的消息..." onkeypress="handleKeyPress(event)"></textarea>
+                    <div class="image-preview" id="imagePreview">
+                        <!-- 图片预览将在这里显示 -->
+                    </div>
                     <div class="enter-tip">Enter 发送 / Ctrl Enter 换行</div>
                     <div class="input-actions">
+                        <div class="image-upload-container">
+                            <div class="image-upload-btn">
+                                <span>📷</span>
+                                <span>图片</span>
+                                <input type="file" class="image-upload-input" id="imageUpload" accept="image/*" onchange="handleImageUpload(event)">
+                            </div>
+                        </div>
                         <div class="custom-select-wrapper">
                             <select id="modelSelect" class="model-selector" style="display: none;">
                                 <option value="">🔄 加载模型中...</option>
@@ -1488,6 +1594,8 @@
         let selectedProvider = null;
         let selectedModel = null;
         let currentAssistantType = 'assistant'; // 当前选中的助手类型
+        let currentImageData = null; // 当前选中的图片数据
+        let currentImageType = null; // 当前选中的图片类型
 
         /**
          * 获取可用的AI提供商列表和模型信息
@@ -1834,9 +1942,20 @@
                 await startNewChat();
             }
 
-            // 添加用户消息到界面
-            addMessage('user', message);
+            // 添加用户消息到界面（包含图片）
+            if (currentImageData) {
+                addMessageWithImage('user', message, currentImageData, currentImageType);
+            } else {
+                addMessage('user', message);
+            }
             messageInput.value = '';
+            
+            let currentImageDataTmp = currentImageData
+            let currentImageTypeTmp = currentImageType
+            // 清除图片预览
+            if (currentImageData) {
+                removeImagePreview();
+            }
 
             // 显示输入指示器
             showTypingIndicator();
@@ -1855,16 +1974,32 @@
                     [provider, model] = modelSelectValue.split(':');
                 }
 
-                // 构建URL参数
-                let url = `/chat/stream?user_id=${userId}&session_id=${currentSessionId}&message=${encodeURIComponent(message)}`;
-                if (provider) {
-                    url += `&provider=${provider}`;
-                }
-                if (model) {
-                    url += `&model=${encodeURIComponent(model)}`;
+                // 构建请求体
+                const requestBody = {
+                    user_id: userId,
+                    session_id: currentSessionId,
+                    message: message,
+                    provider: provider,
+                    model: model,
+                    image_data: currentImageDataTmp,
+                    image_type: currentImageTypeTmp
+                };
+
+                // 发送POST请求获取流式响应
+                const response = await fetch('/chat/stream', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                const eventSource = new EventSource(url);
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
 
                 let reasoningMessage = '';
                 let contentMessage = '';
@@ -1873,87 +2008,109 @@
                 let contentElement = null;
                 let hasShownTypingIndicator = false;
 
-                eventSource.onmessage = function(event) {
-                    const data = JSON.parse(event.data);
+                // 处理流式响应
+                async function processStream() {
+                    try {
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
 
-                    if (data.type === 'chunk' || data.type === 'content' || data.type === 'reasoning') {
-                        if (!hasShownTypingIndicator) {
-                            // 获取思考消息元素并转换为普通消息
-                            const thinkingElement = getThinkingMessageElement();
-                            if (thinkingElement) {
-                                hideTypingIndicator();
-                                // 获取消息容器
-                                messageContainer = thinkingElement.parentElement;
+                            const chunk = decoder.decode(value, { stream: true });
+                            const lines = chunk.split('\n');
+
+                            for (const line of lines) {
+                                if (line.startsWith('data: ')) {
+                                    const jsonStr = line.slice(6);
+                                    if (jsonStr.trim() === '') continue;
+                                    
+                                    try {
+                                        const data = JSON.parse(jsonStr);
+
+                                        if (data.type === 'chunk' || data.type === 'content' || data.type === 'reasoning') {
+                                            if (!hasShownTypingIndicator) {
+                                                // 获取思考消息元素并转换为普通消息
+                                                const thinkingElement = getThinkingMessageElement();
+                                                if (thinkingElement) {
+                                                    hideTypingIndicator();
+                                                    // 获取消息容器
+                                                    messageContainer = thinkingElement.parentElement;
+                                                }
+                                                hasShownTypingIndicator = true;
+                                            }
+
+                                            // 如果还没有消息容器，创建一个
+                                            if (!messageContainer) {
+                                                messageContainer = createMessageContainer('assistant');
+                                                document.getElementById('chatMessages').appendChild(messageContainer);
+                                            }
+
+                                            // 根据类型处理内容
+                                            if (data.type === 'reasoning') {
+                                                // 深度思考内容
+                                                if (!reasoningElement) {
+                                                    reasoningElement = document.createElement('div');
+                                                    reasoningElement.className = 'message-content reasoning-content';
+
+                                                    // 创建reasoning-body容器
+                                                    const reasoningBody = document.createElement('div');
+                                                    reasoningBody.className = 'reasoning-body';
+                                                    reasoningElement.appendChild(reasoningBody);
+
+                                                    // 将reasoning元素添加到消息容器的content wrapper中
+                                                    const contentWrapper = messageContainer.querySelector('.message-content-wrapper');
+                                                    contentWrapper.appendChild(reasoningElement);
+                                                }
+                                                reasoningMessage += data.content;
+
+                                                // 实时渲染思考内容
+                                                const reasoningBody = reasoningElement.querySelector('.reasoning-body');
+                                                renderMarkdownContent(reasoningMessage, reasoningBody);
+                                            } else {
+                                                // 普通内容
+                                                if (!contentElement) {
+                                                    contentElement = document.createElement('div');
+                                                    contentElement.className = 'message-content';
+
+                                                    // 将content元素添加到消息容器的content wrapper中
+                                                    const contentWrapper = messageContainer.querySelector('.message-content-wrapper');
+                                                    contentWrapper.appendChild(contentElement);
+                                                }
+                                                contentMessage += data.content;
+
+                                                // 实时渲染回答内容
+                                                renderMarkdownContent(contentMessage, contentElement);
+                                            }
+                                            scrollToBottom();
+                                        } else if (data.type === 'end') {
+                                            // 重新启用输入
+                                            messageInput.disabled = false;
+                                            document.getElementById('sendButton').disabled = false;
+                                            messageInput.focus();
+                                            return;
+                                        } else if (data.type === 'error') {
+                                            hideTypingIndicator();
+                                            addMessage('assistant', '❌ ' + data.content);
+                                            messageInput.disabled = false;
+                                            document.getElementById('sendButton').disabled = false;
+                                            return;
+                                        }
+                                    } catch (parseError) {
+                                        console.error('解析JSON失败:', parseError, 'JSON字符串:', jsonStr);
+                                    }
+                                }
                             }
-                            hasShownTypingIndicator = true;
                         }
-
-                        // 如果还没有消息容器，创建一个
-                        if (!messageContainer) {
-                            messageContainer = createMessageContainer('assistant');
-                            document.getElementById('chatMessages').appendChild(messageContainer);
-                        }
-
-                        // 根据类型处理内容
-                        if (data.type === 'reasoning') {
-                            // 深度思考内容
-                            if (!reasoningElement) {
-                                reasoningElement = document.createElement('div');
-                                reasoningElement.className = 'message-content reasoning-content';
-
-                                // 创建reasoning-body容器
-                                const reasoningBody = document.createElement('div');
-                                reasoningBody.className = 'reasoning-body';
-                                reasoningElement.appendChild(reasoningBody);
-
-                                // 将reasoning元素添加到消息容器的content wrapper中
-                                const contentWrapper = messageContainer.querySelector('.message-content-wrapper');
-                                contentWrapper.appendChild(reasoningElement);
-                            }
-                            reasoningMessage += data.content;
-
-                            // 实时渲染思考内容
-                            const reasoningBody = reasoningElement.querySelector('.reasoning-body');
-                            renderMarkdownContent(reasoningMessage, reasoningBody);
-                        } else {
-                            // 普通内容
-                            if (!contentElement) {
-                                contentElement = document.createElement('div');
-                                contentElement.className = 'message-content';
-
-                                // 将content元素添加到消息容器的content wrapper中
-                                const contentWrapper = messageContainer.querySelector('.message-content-wrapper');
-                                contentWrapper.appendChild(contentElement);
-                            }
-                            contentMessage += data.content;
-
-                            // 实时渲染回答内容
-                            renderMarkdownContent(contentMessage, contentElement);
-                        }
-                        scrollToBottom();
-                    } else if (data.type === 'end') {
-                        eventSource.close();
-                        // 重新启用输入
-                        messageInput.disabled = false;
-                        document.getElementById('sendButton').disabled = false;
-                        messageInput.focus();
-                    } else if (data.type === 'error') {
+                    } catch (error) {
+                        console.error('处理流式响应失败:', error);
                         hideTypingIndicator();
-                        addMessage('assistant', '❌ ' + data.content);
-                        eventSource.close();
+                        addMessage('assistant', '❌ 抱歉，连接出现问题，请重试。');
                         messageInput.disabled = false;
                         document.getElementById('sendButton').disabled = false;
                     }
-                };
+                }
 
-                eventSource.onerror = function(event) {
-                    console.error('EventSource错误:', event);
-                    hideTypingIndicator();
-                    addMessage('assistant', '❌ 抱歉，连接出现问题，请重试。');
-                    eventSource.close();
-                    messageInput.disabled = false;
-                    document.getElementById('sendButton').disabled = false;
-                };
+                // 开始处理流式响应
+                processStream();
 
             } catch (error) {
                 console.error('发送消息失败:', error);
@@ -1962,6 +2119,50 @@
                 messageInput.disabled = false;
                 document.getElementById('sendButton').disabled = false;
             }
+        }
+
+        /**
+         * 添加包含图片的消息到聊天界面
+         * @param {string} role - 消息角色
+         * @param {string} content - 消息内容
+         * @param {string} imageData - Base64图片数据
+         * @param {string} imageType - 图片类型
+         */
+        function addMessageWithImage(role, content, imageData, imageType) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            // 创建头像
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'message-avatar';
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content-wrapper';
+
+            // 创建图片元素
+            if (imageData) {
+                const imageElement = document.createElement('img');
+                imageElement.className = 'message-image';
+                imageElement.src = `data:${imageType};base64,${imageData}`;
+                imageElement.alt = '上传的图片';
+                contentDiv.appendChild(imageElement);
+            }
+
+            // 创建文本内容
+            if (content) {
+                const textElement = document.createElement('div');
+                textElement.className = 'message-content';
+                textElement.textContent = content;
+                contentDiv.appendChild(textElement);
+            }
+
+            messageDiv.appendChild(avatarDiv);
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+
+            return contentDiv;
         }
 
         /**
@@ -2379,6 +2580,115 @@
                 customSelectIcon.textContent = '🤖';
                 customSelect.title = '请选择模型...';
             }
+        }
+        
+        /**
+         * 处理图片上传
+         */
+        async function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // 检查文件类型
+            if (!file.type.startsWith('image/')) {
+                alert('请选择图片文件');
+                return;
+            }
+            
+            // 检查文件大小（限制为5MB）
+            if (file.size > 5 * 1024 * 1024) {
+                alert('图片文件大小不能超过5MB');
+                return;
+            }
+            
+            try {
+                // 创建FormData对象
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                // 上传图片
+                const response = await fetch('/upload/image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // 保存图片数据
+                    currentImageData = result.data.base64_data;
+                    currentImageType = result.data.content_type;
+                    
+                    // 显示图片预览
+                    showImagePreview(file, result.data.filename);
+                    
+                    console.log('图片上传成功:', result.message);
+                } else {
+                    const error = await response.json();
+                    alert('图片上传失败: ' + (error.detail || '未知错误'));
+                }
+            } catch (error) {
+                console.error('图片上传失败:', error);
+                alert('图片上传失败: ' + error.message);
+            }
+            
+            // 清空文件输入框
+            event.target.value = '';
+        }
+        
+        /**
+         * 显示图片预览
+         */
+        function showImagePreview(file, filename) {
+            const imagePreview = document.getElementById('imagePreview');
+            
+            // 创建预览项
+            const previewItem = document.createElement('div');
+            previewItem.className = 'image-preview-item';
+            
+            // 创建缩略图
+            const thumbnail = document.createElement('img');
+            thumbnail.className = 'image-preview-thumbnail';
+            thumbnail.src = URL.createObjectURL(file);
+            
+            // 创建文件信息
+            const info = document.createElement('div');
+            info.className = 'image-preview-info';
+            info.innerHTML = `
+                <div>${filename}</div>
+                <div>${(file.size / 1024).toFixed(1)} KB</div>
+            `;
+            
+            // 创建删除按钮
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'image-preview-remove';
+            removeBtn.textContent = '删除';
+            removeBtn.onclick = function() {
+                removeImagePreview();
+            };
+            
+            // 组装预览项
+            previewItem.appendChild(thumbnail);
+            previewItem.appendChild(info);
+            previewItem.appendChild(removeBtn);
+            
+            // 清空并添加新的预览项
+            imagePreview.innerHTML = '';
+            imagePreview.appendChild(previewItem);
+            imagePreview.classList.add('show');
+        }
+        
+        /**
+         * 移除图片预览
+         */
+        function removeImagePreview() {
+            const imagePreview = document.getElementById('imagePreview');
+            imagePreview.innerHTML = '';
+            imagePreview.classList.remove('show');
+            
+            // 清空图片数据
+            currentImageData = null;
+            currentImageType = null;
         }
 
 

@@ -160,9 +160,60 @@ class OpenAICompatibleProvider(BaseAIProvider):
 
         except Exception as e:
             logger.error(f"{self.get_provider_display_name()}流式响应失败: {e}")
-            yield f"抱歉，{self.get_provider_display_name()}流式服务暂时不可用：{str(e)}"
+            yield f"抱歉，{self.get_provider_display_name()}流式服务暂时不可用：{str(e)}\n\n"
 
-    def _build_request_params(self, formatted_messages: List[Dict[str, str]], stream: bool = False, **kwargs) -> Dict[str, Any]:
+    def format_messages(self, messages: List[AIMessage], system_prompt: str = None) -> List[Dict[str, Any]]:
+        """
+        格式化消息为提供商特定格式，支持多模态内容
+
+        Args:
+            messages: 消息列表
+            system_prompt: 系统提示词
+
+        Returns:
+            List[Dict[str, Any]]: 格式化后的消息列表
+        """
+        formatted_messages = []
+
+        # 添加系统提示
+        if system_prompt:
+            formatted_messages.append({
+                "role": "system",
+                "content": system_prompt
+            })
+
+        # 添加历史消息
+        for msg in messages:
+            if msg.role in ["user", "assistant"]:
+                # 检查是否包含图片数据
+                if msg.image_data:
+                    # 多模态消息格式
+                    content = [
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{msg.image_type};base64,{msg.image_data}"
+                            }
+                        },
+                        {
+                            "type": "text",
+                            "text": msg.content
+                        },
+                    ]
+                    formatted_messages.append({
+                        "role": msg.role,
+                        "content": content
+                    })
+                else:
+                    # 纯文本消息格式
+                    formatted_messages.append({
+                        "role": msg.role,
+                        "content": msg.content
+                    })
+
+        return formatted_messages
+
+    def _build_request_params(self, formatted_messages: List[Dict[str, Any]], stream: bool = False, **kwargs) -> Dict[str, Any]:
         """
         构建API请求参数
 
