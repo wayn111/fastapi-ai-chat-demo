@@ -654,6 +654,12 @@ async def upload_image(file: UploadFile = File(...)):
 
         # 读取文件内容
         file_content = await file.read()
+        
+        # 检查文件大小（10MB = 10 * 1024 * 1024 bytes）
+        max_size = 10 * 1024 * 1024  # 10MB
+        if len(file_content) > max_size:
+            logger.warning(f"文件大小超出限制 - 文件名: {file.filename}, 大小: {len(file_content)} bytes, 限制: {max_size} bytes")
+            raise HTTPException(status_code=413, detail=f"文件大小不能超过10MB，当前文件大小: {len(file_content) / (1024 * 1024):.2f}MB")
 
         # 验证图片格式
         try:

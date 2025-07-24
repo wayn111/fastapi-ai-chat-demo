@@ -20,7 +20,4 @@ class KimiProvider(OpenAICompatibleProvider):
     # Kimi支持的模型列表
     AVAILABLE_MODELS = [
         "kimi-k2-0711-preview",
-        "moonshot-v1-8k",
-        "moonshot-v1-32k",
-        "moonshot-v1-128k",
     ]

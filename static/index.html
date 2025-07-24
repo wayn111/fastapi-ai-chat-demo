@@ -27,22 +27,22 @@
             --text-primary: #1e293b;
             --text-secondary: #64748b;
             --text-tertiary: #94a3b8;
-            
+
             /* 阴影变量 */
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            
+
             /* 动画变量 */
             --transition-fast: 0.2s ease;
             --transition-normal: 0.3s ease;
-            
+
             /* 尺寸变量 */
             --sidebar-width: 320px;
             --border-radius-sm: 6px;
             --border-radius-md: 8px;
             --border-radius-lg: 16px;
         }
-        
+
         * {
             margin: 0;
             padding: 0;
@@ -78,7 +78,7 @@
             transition: transform var(--transition-normal);
             z-index: 10;
         }
-        
+
         @media (max-width: 768px) {
             .sidebar {
                 position: absolute;
@@ -87,7 +87,7 @@
                 height: 100%;
                 transform: translateX(-100%);
             }
-            
+
             .sidebar.active {
                 transform: translateX(0);
             }
@@ -123,7 +123,7 @@
             font-size: 16px;
             box-shadow: var(--shadow-sm);
         }
-        
+
         .mobile-toggle {
             display: none;
             background: none;
@@ -132,7 +132,7 @@
             font-size: 24px;
             cursor: pointer;
         }
-        
+
         @media (max-width: 768px) {
             .mobile-toggle {
                 display: block;
@@ -148,15 +148,15 @@
             scrollbar-width: thin;
             scrollbar-color: var(--text-tertiary) transparent;
         }
-        
+
         .assistant-section::-webkit-scrollbar {
             width: 6px;
         }
-        
+
         .assistant-section::-webkit-scrollbar-track {
             background: transparent;
         }
-        
+
         .assistant-section::-webkit-scrollbar-thumb {
             background-color: var(--text-tertiary);
             border-radius: 20px;
@@ -260,7 +260,7 @@
             align-items: center;
             gap: 12px;
         }
-        
+
         .menu-toggle {
             display: none;
             background: none;
@@ -270,7 +270,7 @@
             cursor: pointer;
             margin-right: 12px;
         }
-        
+
         @media (max-width: 768px) {
             .menu-toggle {
                 display: block;
@@ -303,7 +303,7 @@
             align-items: center;
             gap: 12px;
         }
-        
+
         @media (max-width: 640px) {
             .chat-actions {
                 gap: 8px;
@@ -323,7 +323,7 @@
             align-items: center;
             gap: 6px;
         }
-        
+
         @media (max-width: 640px) {
             .action-btn {
                 padding: 6px 12px;
@@ -373,7 +373,7 @@
             background-position: right 12px center;
             background-size: 16px;
         }
-        
+
         .selector-container select:focus {
             outline: none;
             border-color: var(--primary);
@@ -462,7 +462,7 @@
             justify-content: flex-end;
             margin-left: auto;
         }
-        
+
         .message.assistant {
             margin-right: auto;
         }
@@ -480,7 +480,7 @@
             box-shadow: var(--shadow-sm);
             transition: transform var(--transition-fast);
         }
-        
+
         .message-avatar:hover {
             transform: scale(1.05);
         }
@@ -517,11 +517,11 @@
             position: relative;
             box-shadow: var(--shadow-sm);
         }
-        
+
         .message-content-wrapper p {
             margin-bottom: 10px;
         }
-        
+
         .message-content-wrapper p:last-child {
             margin-bottom: 0;
         }
@@ -552,7 +552,7 @@
             border: 1px solid var(--border);
             border-bottom-left-radius: 4px;
         }
-        
+
         .message.assistant .message-content-wrapper::before {
             content: '';
             position: absolute;
@@ -587,7 +587,7 @@
             margin: 0 0 10px 0;
             line-height: 1.6;
         }
-        
+
         .message.assistant .message-content.reasoning-content p:last-child {
             margin-bottom: 0;
         }
@@ -812,9 +812,7 @@
         }
 
         .chat-input {
-            padding: 16px 24px;
             background: var(--surface);
-            border-top: 1px solid var(--border);
             position: relative;
             z-index: 5;
         }
@@ -825,13 +823,11 @@
             flex-direction: column;
             background: var(--background);
             border: 1px solid var(--border);
-            border-radius: var(--border-radius-lg);
-            padding: 12px 16px;
+            padding: 4px 16px;
             transition: all var(--transition-fast);
             box-shadow: var(--shadow-sm);
-            margin-bottom: 24px;
         }
-        
+
         .enter-tip {
             position: absolute;
             right: 10px;
@@ -866,48 +862,81 @@
         .chat-input textarea::placeholder {
             color: var(--text-tertiary);
         }
-        
-        .input-actions {
+
+        .controls-section {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            width: 100%;
-            gap: 12px;
+            gap: 8px;
+            margin-bottom: 5px;
         }
-        
+
+        .controls-section > div {
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-section {
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
+        }
+
+        .controls-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
         .image-upload-container {
             position: relative;
-            display: inline-block;
-        }
-        
-        .image-upload-btn {
-            padding: 8px 12px;
-            background: var(--surface);
-            color: var(--text-secondary);
+            display: flex;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
             border: 1px solid var(--border);
             border-radius: var(--border-radius-md);
-            font-size: 14px;
+            background: var(--background);
+            transition: all var(--transition-fast);
+        }
+
+        .image-upload-container:hover {
+            background: var(--background-hover);
+            border-color: var(--border-hover);
+        }
+
+        .image-upload-btn {
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 16px;
             cursor: pointer;
             transition: all var(--transition-fast);
             display: flex;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            border-radius: var(--border-radius-md);
         }
-        
+
         .image-upload-btn:hover {
-            background: var(--background-alt);
-            border-color: var(--primary);
             color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+            transform: scale(1.05);
         }
-        
+
         .image-upload-input {
             position: absolute;
+            cursor: pointer;
             opacity: 0;
             width: 100%;
             height: 100%;
             cursor: pointer;
         }
-        
+
         .image-preview {
             margin-top: 8px;
             padding: 8px;
@@ -916,18 +945,18 @@
             border-radius: var(--border-radius-md);
             display: none;
         }
-        
+
         .image-preview.show {
             display: block;
         }
-        
+
         .image-preview-item {
             display: flex;
             align-items: center;
             gap: 8px;
             padding: 4px;
         }
-        
+
         .image-preview-thumbnail {
             width: 40px;
             height: 40px;
@@ -935,13 +964,13 @@
             border-radius: 4px;
             border: 1px solid var(--border);
         }
-        
+
         .image-preview-info {
             flex: 1;
             font-size: 12px;
             color: var(--text-secondary);
         }
-        
+
         .image-preview-remove {
             padding: 4px 8px;
             background: var(--danger);
@@ -952,11 +981,11 @@
             cursor: pointer;
             transition: all var(--transition-fast);
         }
-        
+
         .image-preview-remove:hover {
             background: #dc2626;
         }
-        
+
         .message-image {
             max-width: 300px;
             max-height: 200px;
@@ -965,19 +994,19 @@
             cursor: pointer;
             transition: all var(--transition-fast);
         }
-        
+
         .message-image:hover {
             transform: scale(1.02);
             box-shadow: var(--shadow-md);
         }
 
         .send-button {
-            padding: 8px 16px;
+            padding: 4px 12px;
             background: var(--primary);
             color: white;
             border: 1px solid var(--primary);
-            border-radius: var(--border-radius-md);
-            font-size: 14px;
+            border-radius: var(--border-radius-sm);
+            font-size: 12px;
             font-weight: 500;
             cursor: pointer;
             transition: all var(--transition-fast);
@@ -1019,73 +1048,77 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        
+
         /* 自定义模型选择器样式 */
         .custom-select-wrapper {
             position: relative;
-            display: inline-block;
-            max-width: 70%;
-            min-width: 200px;
+            display: flex;
+            align-items: center;
+            height: 36px;
+            min-width: 120px;
+            max-width: 200px;
         }
-        
+
         .custom-select {
             display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 8px;
-            background: var(--background);
-            border: 1px solid var(--border);
-            border-radius: var(--border-radius-md);
+            justify-content: flex-start;
             cursor: pointer;
             transition: all var(--transition-fast);
             position: relative;
-            width: 40px;
-            height: 40px;
+            width: 100%;
+            height: 100%;
+            padding: 0 8px;
+            border: 1px solid var(--border);
+            border-radius: var(--border-radius-md);
+            background: var(--background);
+            gap: 6px;
         }
-        
+
         .custom-select:hover {
             background: var(--background-hover);
             border-color: var(--border-hover);
         }
-        
+
         .custom-select-icon {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: var(--primary-light);
+            width: 20px;
+            height: 20px;
             color: var(--primary);
-            font-size: 16px;
+            font-size: 14px;
             flex-shrink: 0;
         }
-        
+
         .custom-select-text {
-            display: none;
+            display: block;
             flex: 1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             font-size: 13px;
             color: var(--text-primary);
+            margin-left: 6px;
         }
-        
+
         .custom-select-arrow {
             display: none;
             margin-left: auto;
             color: var(--text-tertiary);
             font-size: 12px;
             transition: transform 0.2s ease;
+            cursor: pointer;
         }
-        
+
         .custom-select.open .custom-select-arrow {
             transform: rotate(180deg);
         }
-        
+
         .custom-select-dropdown {
             position: absolute;
             bottom: 100%;
+            width: 200px;
             left: 0;
             right: 0;
             background: var(--surface);
@@ -1098,17 +1131,17 @@
             box-shadow: var(--shadow-md);
             display: none;
         }
-        
+
         .custom-select-dropdown.show {
             display: block;
             animation: fadeIn 0.2s ease;
         }
-        
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
+
         .custom-option {
             display: flex;
             align-items: center;
@@ -1117,15 +1150,15 @@
             transition: background 0.2s ease;
             gap: 8px;
         }
-        
+
         .custom-option:hover {
             background: var(--background);
         }
-        
+
         .custom-option.selected {
             background: var(--primary-light);
         }
-        
+
         .custom-option-icon {
             display: flex;
             align-items: center;
@@ -1138,12 +1171,12 @@
             font-size: 14px;
             flex-shrink: 0;
         }
-        
+
         .custom-option-info {
             flex: 1;
             min-width: 0;
         }
-        
+
         .custom-option-provider {
             font-size: 12px;
             font-weight: 500;
@@ -1153,7 +1186,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        
+
         .custom-option-model {
             font-size: 11px;
             color: var(--text-secondary);
@@ -1161,19 +1194,19 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        
+
         /* 移动设备上的样式优化 */
         @media (max-width: 768px) {
             .custom-select-wrapper {
                 max-width: 100%;
                 width: 100%;
             }
-            
+
             .custom-select {
                 width: 100%;
                 padding: 10px 14px;
             }
-            
+
             .custom-option {
                 padding: 12px 14px;
             }
@@ -1240,9 +1273,14 @@
                 padding: 16px;
             }
 
-            .input-actions {
+            .controls-section {
                 flex-wrap: wrap;
-                gap: 10px;
+                gap: 8px;
+                margin-bottom: 12px;
+            }
+
+            .send-section {
+                margin-top: 8px;
             }
 
             .model-selector,
@@ -1251,7 +1289,7 @@
                 width: 100%;
                 order: 1;
             }
-            
+
             .custom-select {
                 width: 40px;
                 height: 40px;
@@ -1259,13 +1297,13 @@
                 font-size: 14px;
                 margin-right: 8px;
             }
-            
+
             .custom-select-icon {
                 width: 28px;
                 height: 28px;
                 font-size: 16px;
             }
-            
+
             .custom-select-text {
                 font-size: 14px;
             }
@@ -1276,7 +1314,7 @@
                 flex-grow: 1;
                 order: 2;
             }
-            
+
             .custom-select-dropdown {
                 position: fixed;
                 bottom: 80px;
@@ -1285,20 +1323,20 @@
                 max-height: 50vh;
                 z-index: 1000;
             }
-            
+
             .custom-option {
                 padding: 14px 16px;
             }
-            
+
             .custom-option-icon {
                 width: 28px;
                 height: 28px;
             }
-            
+
             .custom-option-provider {
                 font-size: 14px;
             }
-            
+
             .custom-option-model {
                 font-size: 12px;
             }
@@ -1308,13 +1346,13 @@
             body {
                 padding: 0;
             }
-            
+
             .chat-container {
                 height: 100vh;
                 border-radius: 0;
                 box-shadow: none;
             }
-            
+
             .message-content-wrapper {
                 max-width: 90%;
                 padding: 10px 14px;
@@ -1413,7 +1451,7 @@
                 --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
                 --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
             }
-            
+
             .chat-container {
                 background: var(--surface);
                 box-shadow: var(--shadow-lg);
@@ -1433,7 +1471,7 @@
                 background: var(--surface);
                 border-top-color: var(--border);
             }
-            
+
             .enter-tip {
                 font-size: 11px;
                 bottom: -24px;
@@ -1443,31 +1481,31 @@
                 background: var(--background-alt);
                 border-color: var(--border);
             }
-            
+
             .chat-input textarea {
                 color: var(--text-primary);
             }
-            
+
             .chat-input textarea::placeholder {
                 color: var(--text-tertiary);
             }
-            
+
             .send-button {
                 background: var(--primary);
                 border-color: var(--primary);
             }
-            
+
             .send-button:hover {
                 background: var(--primary-hover);
                 border-color: var(--primary-hover);
             }
-            
+
             .model-selector {
                 background: var(--background-alt);
                 border-color: var(--border);
                 color: var(--text-secondary);
             }
-            
+
             .model-selector:hover {
                 background: var(--background-hover);
                 border-color: var(--border-hover);
@@ -1551,19 +1589,7 @@
 
             <div class="chat-input">
                 <div class="input-container">
-                    <textarea id="messageInput" placeholder="💭 输入您的消息..." onkeypress="handleKeyPress(event)"></textarea>
-                    <div class="image-preview" id="imagePreview">
-                        <!-- 图片预览将在这里显示 -->
-                    </div>
-                    <div class="enter-tip">Enter 发送 / Ctrl Enter 换行</div>
-                    <div class="input-actions">
-                        <div class="image-upload-container">
-                            <div class="image-upload-btn">
-                                <span>📷</span>
-                                <span>图片</span>
-                                <input type="file" class="image-upload-input" id="imageUpload" accept="image/*" onchange="handleImageUpload(event)">
-                            </div>
-                        </div>
+                    <div class="controls-section">
                         <div class="custom-select-wrapper">
                             <select id="modelSelect" class="model-selector" style="display: none;">
                                 <option value="">🔄 加载模型中...</option>
@@ -1577,6 +1603,19 @@
                                 <!-- 选项将通过JavaScript动态加载 -->
                             </div>
                         </div>
+                        <div class="image-upload-container">
+                            <div class="image-upload-btn">
+                                <span>📷</span>
+                                <input type="file" class="image-upload-input" id="imageUpload" accept="image/*" onchange="handleImageUpload(event)">
+                            </div>
+                        </div>
+                    </div>
+                    <textarea id="messageInput" placeholder="输入您的消息..." onkeypress="handleKeyPress(event)"></textarea>
+                    <div class="image-preview" id="imagePreview">
+                        <!-- 图片预览将在这里显示 -->
+                    </div>
+                    <div class="enter-tip">Enter 发送 / Ctrl Enter 换行</div>
+                    <div class="send-section">
                         <button class="send-button" id="sendButton" onclick="sendMessage()">
                             发送
                         </button>
@@ -1650,6 +1689,11 @@
             if (selectedProvider && selectedModel) {
                 const event = new Event('change');
                 modelSelect.dispatchEvent(event);
+            } else if (modelSelect.options.length > 1) {
+                // 如果没有默认模型但有可用模型，选择第一个可用模型
+                modelSelect.selectedIndex = 1;
+                const event = new Event('change');
+                modelSelect.dispatchEvent(event);
             }
 
             // 初始化自定义选择器样式
@@ -1658,7 +1702,7 @@
 
         // 全局变量存储从后端获取的提供商图标配置
         let providerIcons = {};
-        
+
         /**
          * 获取提供商图标
          */
@@ -1668,7 +1712,7 @@
 
         // 全局变量存储从接口获取的角色配置
         let aiRolesConfig = {};
-        
+
         /**
          * 获取助手图标
          * @param {string} assistantType - 助手类型
@@ -1731,7 +1775,7 @@
                 console.error('未找到角色配置:', assistantType);
                 return;
             }
-            
+
             const config = {
                 icon: roleConfig.icon || getAssistantIcon(assistantType),
                 name: roleConfig.name,
@@ -1755,7 +1799,7 @@
             try {
                 const response = await fetch('/roles');
                 const data = await response.json();
-                
+
                 // 将角色数组转换为对象格式，便于查找
                  aiRolesConfig = {};
                  data.roles.forEach(role => {
@@ -1765,10 +1809,10 @@
                          icon: role.icon || getDefaultIcon(role.key) // 使用接口返回的图标或默认图标
                      };
                  });
-                
+
                 // 渲染助手列表
                 renderAssistantList();
-                
+
                 console.log('AI角色配置加载成功:', aiRolesConfig);
             } catch (error) {
                 console.error('加载AI角色配置失败:', error);
@@ -1793,7 +1837,7 @@
                 renderAssistantList();
             }
         }
-        
+
         /**
          * 获取角色的默认图标
          * @param {string} roleKey - 角色键名
@@ -1807,7 +1851,7 @@
             };
             return iconMap[roleKey] || '🤖';
         }
-        
+
         /**
          * 渲染助手列表
          * 根据从接口获取的角色配置动态生成助手列表
@@ -1815,15 +1859,15 @@
         function renderAssistantList() {
             const assistantList = document.querySelector('.assistant-list');
             if (!assistantList) return;
-            
+
             assistantList.innerHTML = '';
-            
+
             Object.keys(aiRolesConfig).forEach((roleKey, index) => {
                 const role = aiRolesConfig[roleKey];
                 const assistantItem = document.createElement('div');
                 assistantItem.className = `assistant-item ${index === 0 ? 'active' : ''}`;
                 assistantItem.onclick = () => selectAssistant(roleKey);
-                
+
                 assistantItem.innerHTML = `
                     <div class="assistant-icon">${role.icon}</div>
                     <div class="assistant-info">
@@ -1831,10 +1875,10 @@
                         <div class="assistant-desc">${role.description}</div>
                     </div>
                 `;
-                
+
                 assistantList.appendChild(assistantItem);
             });
-            
+
             // 默认选择第一个助手
             const firstRoleKey = Object.keys(aiRolesConfig)[0];
             if (firstRoleKey) {
@@ -1842,7 +1886,7 @@
                 updateSelectedModelInfo(firstRoleKey);
             }
         }
-        
+
         /**
          * 更新选中模型信息显示
          * @param {string} assistantType - 助手类型
@@ -1850,7 +1894,7 @@
         function updateSelectedModelInfo(assistantType) {
             const roleConfig = aiRolesConfig[assistantType];
             if (!roleConfig) return;
-            
+
             const selectedModelInfo = document.getElementById('selectedModelInfo');
             if (selectedModelInfo) {
                 selectedModelInfo.innerHTML = `
@@ -1859,7 +1903,7 @@
                 `;
             }
         }
-        
+
         /**
          * 开始新的聊天会话
          * 创建新的会话ID并初始化聊天界面
@@ -1949,7 +1993,7 @@
                 addMessage('user', message);
             }
             messageInput.value = '';
-            
+
             let currentImageDataTmp = currentImageData
             let currentImageTypeTmp = currentImageType
             // 清除图片预览
@@ -2022,7 +2066,7 @@
                                 if (line.startsWith('data: ')) {
                                     const jsonStr = line.slice(6);
                                     if (jsonStr.trim() === '') continue;
-                                    
+
                                     try {
                                         const data = JSON.parse(jsonStr);
 
@@ -2373,28 +2417,28 @@
          */
         function renderMarkdownContent(content, element) {
             // 检测是否包含Markdown格式
-            const hasMarkdown = content.includes('```') || 
-                               content.includes('**') || 
-                               content.includes('##') || 
-                               content.includes('- ') || 
+            const hasMarkdown = content.includes('```') ||
+                               content.includes('**') ||
+                               content.includes('##') ||
+                               content.includes('- ') ||
                                content.includes('1. ') ||
                                content.includes('|'); // 表格
-            
+
             if (hasMarkdown) {
                 try {
                     // Markdown 渲染
                     element.innerHTML = marked.parse(content);
-                    
+
                     // 代码高亮
                     element.querySelectorAll('pre code').forEach((block) => {
                         hljs.highlightElement(block);
                     });
-                    
+
                     // 表格样式优化
                     element.querySelectorAll('table').forEach((table) => {
                         table.className = 'markdown-table';
                     });
-                    
+
                 } catch (error) {
                     console.warn('Markdown渲染失败，使用纯文本显示:', error);
                     element.textContent = content;
@@ -2451,10 +2495,10 @@
             // 更新选中的提供商和模型
             if (this.value && this.value.includes(':')) {
                 [selectedProvider, selectedModel] = this.value.split(':');
-                
+
                 // 更新自定义选择器显示
                 updateCustomSelectDisplay();
-                
+
                 // 只有在会话已存在时才添加切换提示消息
                 if (currentSessionId) {
                     const modelName = this.options[this.selectedIndex].text;
@@ -2462,7 +2506,7 @@
                 }
             }
         });
-        
+
         /**
          * 初始化自定义选择器样式和功能
          */
@@ -2471,59 +2515,59 @@
             const customSelect = document.getElementById('customSelect');
             const customSelectIcon = customSelect.querySelector('.custom-select-icon');
             const customSelectDropdown = document.getElementById('customSelectDropdown');
-            
+
             // 初始化下拉选项
             updateCustomSelectOptions();
-            
+
             // 更新显示的选中项
             updateCustomSelectDisplay();
-            
+
             // 点击自定义选择器时显示/隐藏下拉菜单
             customSelect.addEventListener('click', function(e) {
                 e.stopPropagation();
                 customSelect.classList.toggle('open');
                 customSelectDropdown.classList.toggle('show');
             });
-            
+
             // 点击页面其他地方时关闭下拉菜单
             document.addEventListener('click', function() {
                 customSelect.classList.remove('open');
                 customSelectDropdown.classList.remove('show');
             });
-            
+
             // 阻止下拉菜单的点击事件冒泡
             customSelectDropdown.addEventListener('click', function(e) {
                 e.stopPropagation();
             });
         }
-        
+
         /**
          * 更新自定义选择器的选项
          */
         function updateCustomSelectOptions() {
             const modelSelect = document.getElementById('modelSelect');
             const customSelectDropdown = document.getElementById('customSelectDropdown');
-            
+
             // 清空现有选项
             customSelectDropdown.innerHTML = '';
-            
+
             // 为每个选项创建自定义选项元素
             Array.from(modelSelect.options).forEach((option, index) => {
                 if (!option.value) {
                     // 跳过空值选项（如"请选择模型..."）
                     return;
                 }
-                
+
                 const customOption = document.createElement('div');
                 customOption.className = 'custom-option';
                 if (option.selected) {
                     customOption.classList.add('selected');
                 }
-                
+
                 const providerIcon = option.getAttribute('data-provider-icon') || '🤖';
                 const providerName = option.getAttribute('data-provider-name') || '';
                 const modelName = option.getAttribute('data-model-name') || '';
-                
+
                 customOption.innerHTML = `
                     <div class="custom-option-icon">${providerIcon}</div>
                     <div class="custom-option-info">
@@ -2531,12 +2575,12 @@
                         <div class="custom-option-model">${modelName}</div>
                     </div>
                 `;
-                
+
                 // 点击选项时更新选择器和触发change事件
                 customOption.addEventListener('click', function() {
                     // 先设置选中状态
                     modelSelect.selectedIndex = index;
-                    
+
                     // 更新所有选项的选中状态
                     Array.from(customSelectDropdown.querySelectorAll('.custom-option')).forEach((opt, i) => {
                         if (i === index - 1) { // 减1是因为跳过了第一个空选项
@@ -2545,20 +2589,20 @@
                             opt.classList.remove('selected');
                         }
                     });
-                    
+
                     // 触发原生select的change事件
                     const event = new Event('change');
                     modelSelect.dispatchEvent(event);
-                    
+
                     // 关闭下拉菜单
                     document.getElementById('customSelect').classList.remove('open');
                     customSelectDropdown.classList.remove('show');
                 });
-                
+
                 customSelectDropdown.appendChild(customOption);
             });
         }
-        
+
         /**
          * 更新自定义选择器显示的内容
          */
@@ -2566,62 +2610,65 @@
             const modelSelect = document.getElementById('modelSelect');
             const customSelect = document.getElementById('customSelect');
             const customSelectIcon = customSelect.querySelector('.custom-select-icon');
-            
+            const customSelectText = customSelect.querySelector('.custom-select-text');
+
             if (modelSelect.selectedIndex > 0) {
                 const selectedOption = modelSelect.options[modelSelect.selectedIndex];
                 const providerIcon = selectedOption.getAttribute('data-provider-icon') || '🤖';
-                
-                customSelectIcon.textContent = providerIcon;
-                // 设置title属性，以便鼠标悬停时显示完整信息
                 const providerName = selectedOption.getAttribute('data-provider-name') || '';
                 const modelName = selectedOption.getAttribute('data-model-name') || '';
+
+                customSelectIcon.textContent = providerIcon;
+                customSelectText.textContent = modelName || `${providerName} 模型`;
+                // 设置title属性，以便鼠标悬停时显示完整信息
                 customSelect.title = `${providerName} - ${modelName}`;
             } else {
                 customSelectIcon.textContent = '🤖';
+                customSelectText.textContent = '请选择模型...';
                 customSelect.title = '请选择模型...';
             }
         }
-        
+
         /**
          * 处理图片上传
          */
         async function handleImageUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-            
+
             // 检查文件类型
             if (!file.type.startsWith('image/')) {
                 alert('请选择图片文件');
                 return;
             }
-            
+
             // 检查文件大小（限制为5MB）
             if (file.size > 5 * 1024 * 1024) {
                 alert('图片文件大小不能超过5MB');
                 return;
             }
-            
+
             try {
                 // 创建FormData对象
                 const formData = new FormData();
                 formData.append('file', file);
-                
+
                 // 上传图片
                 const response = await fetch('/upload/image', {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 if (response.ok) {
                     const result = await response.json();
-                    
+
                     // 保存图片数据
                     currentImageData = result.data.base64_data;
                     currentImageType = result.data.content_type;
-                    
+
                     // 显示图片预览
                     showImagePreview(file, result.data.filename);
-                    
+
                     console.log('图片上传成功:', result.message);
                 } else {
                     const error = await response.json();
@@ -2631,26 +2678,26 @@
                 console.error('图片上传失败:', error);
                 alert('图片上传失败: ' + error.message);
             }
-            
+
             // 清空文件输入框
             event.target.value = '';
         }
-        
+
         /**
          * 显示图片预览
          */
         function showImagePreview(file, filename) {
             const imagePreview = document.getElementById('imagePreview');
-            
+
             // 创建预览项
             const previewItem = document.createElement('div');
             previewItem.className = 'image-preview-item';
-            
+
             // 创建缩略图
             const thumbnail = document.createElement('img');
             thumbnail.className = 'image-preview-thumbnail';
             thumbnail.src = URL.createObjectURL(file);
-            
+
             // 创建文件信息
             const info = document.createElement('div');
             info.className = 'image-preview-info';
@@ -2658,7 +2705,7 @@
                 <div>${filename}</div>
                 <div>${(file.size / 1024).toFixed(1)} KB</div>
             `;
-            
+
             // 创建删除按钮
             const removeBtn = document.createElement('button');
             removeBtn.className = 'image-preview-remove';
@@ -2666,18 +2713,18 @@
             removeBtn.onclick = function() {
                 removeImagePreview();
             };
-            
+
             // 组装预览项
             previewItem.appendChild(thumbnail);
             previewItem.appendChild(info);
             previewItem.appendChild(removeBtn);
-            
+
             // 清空并添加新的预览项
             imagePreview.innerHTML = '';
             imagePreview.appendChild(previewItem);
             imagePreview.classList.add('show');
         }
-        
+
         /**
          * 移除图片预览
          */
@@ -2685,7 +2732,7 @@
             const imagePreview = document.getElementById('imagePreview');
             imagePreview.innerHTML = '';
             imagePreview.classList.remove('show');
-            
+
             // 清空图片数据
             currentImageData = null;
             currentImageType = null;
@@ -2697,7 +2744,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // 加载AI角色配置
             loadAIRoles();
-            
+
             // 加载AI提供商列表
             loadProviders();
 
