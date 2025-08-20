@@ -27,6 +27,9 @@
             --text-primary: #1e293b;
             --text-secondary: #64748b;
             --text-tertiary: #94a3b8;
+            --background-hover: #f1f5f9;
+            --background-alt: #f8fafc;
+            --border-hover: #cbd5e1;
 
             /* 阴影变量 */
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -197,11 +200,6 @@
             border-color: var(--primary);
         }
 
-        .assistant-item.active .assistant-icon {
-            background: var(--primary);
-            color: white;
-        }
-
         .assistant-icon {
             width: 26px;
             height: 26px;
@@ -213,6 +211,11 @@
             flex-shrink: 0;
             background: var(--background);
             transition: all var(--transition-fast);
+        }
+
+        .assistant-item.active .assistant-icon {
+            background: var(--primary);
+            color: white;
         }
 
         .assistant-info {
@@ -300,8 +303,6 @@
             background: var(--primary);
         }
 
-
-
         .selector-container select {
             width: 100%;
             padding: 12px 16px;
@@ -324,12 +325,6 @@
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .selector-container select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .selector-container {
@@ -500,10 +495,6 @@
         .message.assistant .message-content.reasoning-content p {
             margin: 0 0 10px 0;
             line-height: 1.6;
-        }
-
-        .message.assistant .message-content.reasoning-content p:last-child {
-            margin-bottom: 0;
         }
 
         .message.assistant .message-content.reasoning-content p:last-child {
@@ -798,13 +789,7 @@
             transition: all var(--transition-fast);
         }
 
-        .image-upload-container:hover {
-            background: var(--background-hover);
-            border-color: var(--border-hover);
-        }
-
         .image-upload-btn {
-            cursor: pointer;
             color: var(--text-secondary);
             font-size: 14px;
             cursor: pointer;
@@ -825,7 +810,6 @@
 
         .image-upload-input {
             position: absolute;
-            cursor: pointer;
             opacity: 0;
             width: 100%;
             height: 100%;
@@ -971,7 +955,8 @@
             gap: 4px;
         }
 
-        .custom-select:hover {
+        .custom-select:hover,
+        .image-upload-container:hover {
             background: var(--background-hover);
             border-color: var(--border-hover);
         }
@@ -1091,7 +1076,18 @@
             text-overflow: ellipsis;
         }
 
-        /* 移动设备上的样式优化 */
+        .model-selector:hover {
+            background: var(--background-hover);
+            border-color: var(--border-hover);
+        }
+
+        .model-selector:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* 响应式设计 */
         @media (max-width: 768px) {
             .custom-select-wrapper {
                 max-width: 100%;
@@ -1106,23 +1102,6 @@
             .custom-option {
                 padding: 12px 14px;
             }
-        }
-
-        .model-selector:hover {
-            background: var(--background-hover);
-            border-color: var(--border-hover);
-        }
-
-        .model-selector:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-
-
-        /* 响应式设计 */
-        @media (max-width: 768px) {
             body {
                 padding: 8px;
             }
@@ -1436,15 +1415,14 @@
                 color: var(--text-secondary);
             }
 
-            pre {
+            pre,
+            code {
                 background: var(--background);
                 border-color: var(--border);
             }
 
             code {
-                background: var(--background);
                 color: var(--primary);
-                border-color: var(--border);
             }
         }
     </style>
@@ -1772,8 +1750,9 @@
             chatMessages.appendChild(messageDiv);
         }
 
-        // 全局变量存储从后端获取的提供商图标配置
+        // 全局变量存储从后端获取的提供商图标配置和角色配置
         let providerIcons = {};
+        let aiRolesConfig = {};
 
         /**
          * 获取提供商图标
@@ -1781,9 +1760,6 @@
         function getProviderIcon(providerId) {
             return providerIcons[providerId] || '🤖';
         }
-
-        // 全局变量存储从接口获取的角色配置
-        let aiRolesConfig = {};
 
         /**
          * 获取当前选中的助手类型
@@ -1799,18 +1775,8 @@
          * @returns {string} 对应的图标
          */
         function getAssistantIcon(assistantType) {
-            // 从接口配置中获取图标，如果没有则使用默认图标
             const roleConfig = aiRolesConfig[assistantType];
-            if (roleConfig && roleConfig.icon) {
-                return roleConfig.icon;
-            }
-            // 默认图标映射（作为后备）
-            const defaultIcons = {
-                'assistant': '🤖',
-                'teacher': '👨‍🏫',
-                'programmer': '👨‍💻'
-            };
-            return defaultIcons[assistantType] || '🤖';
+            return roleConfig?.icon || getDefaultIcon(assistantType);
         }
 
         /**
@@ -1820,19 +1786,14 @@
         function updateAssistantAvatars(assistantType) {
             const assistantMessages = document.querySelectorAll('.message.assistant .message-avatar');
             const icon = getAssistantIcon(assistantType);
-
             assistantMessages.forEach(avatar => {
                 avatar.setAttribute('data-icon', icon);
             });
         }
 
-
-
-
-
         /**
          * 选择智能助手类型
-         * @param {string} assistantType - 助手类型 ('general', 'coding', 'writing', 'analysis')
+         * @param {string} assistantType - 助手类型
          */
         function selectAssistant(assistantType) {
             // 更新当前助手类型
@@ -1978,11 +1939,6 @@
 
         /**
          * 开始新的聊天会话
-         * 创建新的会话ID并初始化聊天界面
-         * @param {string} welcomeMessage - 自定义欢迎消息
-         */
-        /**
-         * 开始新的聊天会话
          * 为当前助手类型创建新的会话ID并初始化聊天界面
          * @param {string} welcomeMessage - 自定义欢迎消息
          */
@@ -2085,29 +2041,21 @@
             }
             messageInput.value = '';
 
-            let currentImageDataTmp = currentImageData
-            let currentImageTypeTmp = currentImageType
+            // 保存图片数据的临时变量
+            const currentImageDataTmp = currentImageData;
+            const currentImageTypeTmp = currentImageType;
+            
             // 清除图片预览
             if (currentImageData) {
                 removeImagePreview();
             }
 
-            // 显示输入指示器
+            // 显示输入指示器并禁用输入
             showTypingIndicator();
-
-            // 禁用输入
             messageInput.disabled = true;
-            document.getElementById('sendButton').disabled = true;
+            sendButton.disabled = true;
 
             try {
-                // 获取选中的模型信息
-                const modelSelectValue = document.getElementById('modelSelect').value;
-                let provider = selectedProvider;
-                let model = selectedModel;
-
-                if (modelSelectValue && modelSelectValue.includes(':')) {
-                    [provider, model] = modelSelectValue.split(':');
-                }
 
                 // 构建请求体
                 const requestBody = {
@@ -2485,11 +2433,7 @@
          * @returns {HTMLElement|null} 思考消息的内容元素
          */
         function getThinkingMessageElement() {
-            if (thinkingMessageElement) {
-                const contentDiv = thinkingMessageElement.querySelector('.message-content-wrapper');
-                return contentDiv;
-            }
-            return null;
+            return thinkingMessageElement?.querySelector('.message-content-wrapper') || null;
         }
 
         /**
@@ -2546,13 +2490,6 @@
             const chatMessages = document.getElementById('chatMessages');
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
-
-        /**
-         * 清除当前会话的对话历史
-         */
-
-
-
 
         // 模型切换提示
         document.getElementById('modelSelect').addEventListener('change', function() {
@@ -2612,21 +2549,13 @@
             const modelSelect = document.getElementById('modelSelect');
             const customSelectDropdown = document.getElementById('customSelectDropdown');
 
-            // 清空现有选项
             customSelectDropdown.innerHTML = '';
 
-            // 为每个选项创建自定义选项元素
             Array.from(modelSelect.options).forEach((option, index) => {
-                if (!option.value) {
-                    // 跳过空值选项（如"请选择模型..."）
-                    return;
-                }
+                if (!option.value) return;
 
                 const customOption = document.createElement('div');
-                customOption.className = 'custom-option';
-                if (option.selected) {
-                    customOption.classList.add('selected');
-                }
+                customOption.className = `custom-option ${option.selected ? 'selected' : ''}`;
 
                 const providerIcon = option.getAttribute('data-provider-icon') || '🤖';
                 const providerName = option.getAttribute('data-provider-name') || '';
@@ -2640,26 +2569,19 @@
                     </div>
                 `;
 
-                // 点击选项时更新选择器和触发change事件
-                customOption.addEventListener('click', function() {
-                    // 先设置选中状态
+                customOption.addEventListener('click', () => {
                     modelSelect.selectedIndex = index;
-
-                    // 更新所有选项的选中状态
-                    Array.from(customSelectDropdown.querySelectorAll('.custom-option')).forEach((opt, i) => {
-                        if (i === index - 1) { // 减1是因为跳过了第一个空选项
-                            opt.classList.add('selected');
-                        } else {
-                            opt.classList.remove('selected');
-                        }
+                    
+                    // 更新选中状态
+                    customSelectDropdown.querySelectorAll('.custom-option').forEach((opt, i) => {
+                        opt.classList.toggle('selected', i === index - 1);
                     });
 
-                    // 触发原生select的change事件
-                    const event = new Event('change');
-                    modelSelect.dispatchEvent(event);
-
+                    modelSelect.dispatchEvent(new Event('change'));
+                    
                     // 关闭下拉菜单
-                    document.getElementById('customSelect').classList.remove('open');
+                    const customSelect = document.getElementById('customSelect');
+                    customSelect.classList.remove('open');
                     customSelectDropdown.classList.remove('show');
                 });
 
@@ -2676,15 +2598,15 @@
             const customSelectIcon = customSelect.querySelector('.custom-select-icon');
             const customSelectText = customSelect.querySelector('.custom-select-text');
 
-            if (modelSelect.selectedIndex > 0) {
-                const selectedOption = modelSelect.options[modelSelect.selectedIndex];
+            const selectedOption = modelSelect.options[modelSelect.selectedIndex];
+            
+            if (modelSelect.selectedIndex > 0 && selectedOption) {
                 const providerIcon = selectedOption.getAttribute('data-provider-icon') || '🤖';
                 const providerName = selectedOption.getAttribute('data-provider-name') || '';
                 const modelName = selectedOption.getAttribute('data-model-name') || '';
 
                 customSelectIcon.textContent = providerIcon;
                 customSelectText.textContent = modelName || `${providerName} 模型`;
-                // 设置title属性，以便鼠标悬停时显示完整信息
                 customSelect.title = `${providerName} - ${modelName}`;
             } else {
                 customSelectIcon.textContent = '🤖';
@@ -2752,40 +2674,17 @@
          */
         function showImagePreview(file, filename) {
             const imagePreview = document.getElementById('imagePreview');
-
-            // 创建预览项
-            const previewItem = document.createElement('div');
-            previewItem.className = 'image-preview-item';
-
-            // 创建缩略图
-            const thumbnail = document.createElement('img');
-            thumbnail.className = 'image-preview-thumbnail';
-            thumbnail.src = URL.createObjectURL(file);
-
-            // 创建文件信息
-            const info = document.createElement('div');
-            info.className = 'image-preview-info';
-            info.innerHTML = `
-                <div>${filename}</div>
-                <div>${(file.size / 1024).toFixed(1)} KB</div>
+            
+            imagePreview.innerHTML = `
+                <div class="image-preview-item">
+                    <img class="image-preview-thumbnail" src="${URL.createObjectURL(file)}">
+                    <div class="image-preview-info">
+                        <div>${filename}</div>
+                        <div>${(file.size / 1024).toFixed(1)} KB</div>
+                    </div>
+                    <button class="image-preview-remove" onclick="removeImagePreview()">删除</button>
+                </div>
             `;
-
-            // 创建删除按钮
-            const removeBtn = document.createElement('button');
-            removeBtn.className = 'image-preview-remove';
-            removeBtn.textContent = '删除';
-            removeBtn.onclick = function() {
-                removeImagePreview();
-            };
-
-            // 组装预览项
-            previewItem.appendChild(thumbnail);
-            previewItem.appendChild(info);
-            previewItem.appendChild(removeBtn);
-
-            // 清空并添加新的预览项
-            imagePreview.innerHTML = '';
-            imagePreview.appendChild(previewItem);
             imagePreview.classList.add('show');
         }
 
@@ -2796,8 +2695,6 @@
             const imagePreview = document.getElementById('imagePreview');
             imagePreview.innerHTML = '';
             imagePreview.classList.remove('show');
-
-            // 清空图片数据
             currentImageData = null;
             currentImageType = null;
         }
