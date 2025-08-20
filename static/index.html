@@ -705,34 +705,28 @@
             background: var(--surface);
             position: relative;
             z-index: 5;
-            padding: 14px 20px;
         }
 
         .input-container {
             position: relative;
             display: flex;
             flex-direction: column;
+            width: 100%;
             background: var(--background);
-            border: 1px solid var(--border);
-            border-radius: 14px;
+            border-top: 1px solid var(--border);
             padding: 10px 14px;
             transition: all var(--transition-fast);
             box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
-        }
-
-        .enter-tip {
-            position: absolute;
-            right: 16px;
-            bottom: -20px;
-            font-size: 11px;
-            color: var(--text-tertiary);
-            pointer-events: none;
         }
 
         .input-container:focus-within {
             border-color: var(--primary);
             background: var(--surface);
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.08), 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .main-input-wrapper {
+            width: 100%;
         }
 
         .chat-input textarea {
@@ -743,36 +737,45 @@
             font-size: 14px;
             color: var(--text-primary);
             resize: none;
-            min-height: 50px;
-            max-height: 140px;
+            min-height: 120px;
+            max-height: 240px;
             overflow-y: auto;
-            margin-bottom: 6px;
             line-height: 1.4;
             font-family: inherit;
+            padding-bottom: 40px;
         }
 
         .chat-input textarea::placeholder {
             color: var(--text-tertiary);
         }
 
-        .controls-section {
+        .input-controls {
+            position: absolute;
+            bottom: 8px;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 8px;
+        }
+
+        .left-controls {
             display: flex;
             align-items: center;
             gap: 6px;
-            margin-bottom: 2px;
         }
 
-        .controls-section > div {
+        .right-controls {
+            display: flex;
+            align-items: center;
+        }
+
+        .left-controls > div {
             height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        .send-section {
-            display: flex;
-            justify-content: flex-end;
-            width: 100%;
         }
 
         .controls-group {
@@ -1492,36 +1495,39 @@
 
             <div class="chat-input">
                 <div class="input-container">
-                    <div class="controls-section">
-                        <div class="custom-select-wrapper">
-                            <select id="modelSelect" class="model-selector" style="display: none;">
-                                <option value="">🔄 加载模型中...</option>
-                            </select>
-                            <div id="customSelect" class="custom-select">
-                                <div class="custom-select-icon">🤖</div>
-                                <div class="custom-select-text">加载模型中...</div>
-                                <div class="custom-select-arrow">▼</div>
+                    <div class="main-input-wrapper">
+                        <textarea id="messageInput" placeholder="输入您的消息... (Enter 发送 / Ctrl Enter 换行)" onkeypress="handleKeyPress(event)"></textarea>
+                        <div class="input-controls">
+                            <div class="left-controls">
+                                <div class="custom-select-wrapper">
+                                    <select id="modelSelect" class="model-selector" style="display: none;">
+                                        <option value="">🔄 加载模型中...</option>
+                                    </select>
+                                    <div id="customSelect" class="custom-select">
+                                        <div class="custom-select-icon">🤖</div>
+                                        <div class="custom-select-text">加载模型中...</div>
+                                        <div class="custom-select-arrow">▼</div>
+                                    </div>
+                                    <div id="customSelectDropdown" class="custom-select-dropdown">
+                                        <!-- 选项将通过JavaScript动态加载 -->
+                                    </div>
+                                </div>
+                                <div class="image-upload-container">
+                                    <div class="image-upload-btn">
+                                        <span>📷</span>
+                                        <input type="file" class="image-upload-input" id="imageUpload" accept="image/*" onchange="handleImageUpload(event)">
+                                    </div>
+                                </div>
                             </div>
-                            <div id="customSelectDropdown" class="custom-select-dropdown">
-                                <!-- 选项将通过JavaScript动态加载 -->
-                            </div>
-                        </div>
-                        <div class="image-upload-container">
-                            <div class="image-upload-btn">
-                                <span>📷</span>
-                                <input type="file" class="image-upload-input" id="imageUpload" accept="image/*" onchange="handleImageUpload(event)">
+                            <div class="right-controls">
+                                <button class="send-button" id="sendButton" onclick="sendMessage()">
+                                    发送
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <textarea id="messageInput" placeholder="输入您的消息..." onkeypress="handleKeyPress(event)"></textarea>
                     <div class="image-preview" id="imagePreview">
                         <!-- 图片预览将在这里显示 -->
-                    </div>
-                    <div class="enter-tip">Enter 发送 / Ctrl Enter 换行</div>
-                    <div class="send-section">
-                        <button class="send-button" id="sendButton" onclick="sendMessage()">
-                            发送
-                        </button>
                     </div>
                 </div>
             </div>
