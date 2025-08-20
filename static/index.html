@@ -235,6 +235,8 @@
             color: #64748b;
         }
 
+        /* 会话列表样式已移除 */
+
         .chat-container {
             flex: 1;
             display: flex;
@@ -298,63 +300,7 @@
             background: var(--primary);
         }
 
-        .chat-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
 
-        @media (max-width: 640px) {
-            .chat-actions {
-                gap: 8px;
-            }
-        }
-
-        .action-btn {
-            padding: 8px 16px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            border-radius: var(--border-radius-sm);
-            font-size: 14px;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        @media (max-width: 640px) {
-            .action-btn {
-                padding: 6px 12px;
-                font-size: 13px;
-            }
-        }
-
-        .action-btn:hover {
-            background: var(--background);
-            border-color: var(--border);
-            color: var(--text-primary);
-        }
-
-        .clear-history-btn {
-            background: var(--danger);
-            color: white;
-            border-color: var(--danger);
-        }
-
-        .clear-history-btn:hover {
-            background: var(--danger-hover);
-            border-color: var(--danger-hover);
-            color: white;
-        }
-
-        .clear-history-btn:disabled {
-            background: var(--text-tertiary);
-            border-color: var(--text-tertiary);
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
 
         .selector-container select {
             width: 100%;
@@ -1555,6 +1501,8 @@
                         <!-- 助手列表将通过 JavaScript 动态加载 -->
                     </div>
                 </div>
+                
+                <!-- 会话列表区域已移除 -->
         </div>
 
         <!-- 右侧对话区域 -->
@@ -1566,14 +1514,7 @@
                         <span>请选择模型开始对话</span>
                     </div>
                 </div>
-                <div class="chat-actions">
-                    <button class="action-btn" onclick="startNewChat()" title="新建对话">
-                        ➕ 新对话
-                    </button>
-                    <button class="action-btn clear-history-btn" id="clearHistoryBtn" onclick="clearHistory()" disabled title="清除历史">
-                        🗑️ 清除历史
-                    </button>
-                </div>
+
             </div>
 
             <div class="chat-messages" id="chatMessages">
@@ -1627,7 +1568,7 @@
 
     <script>
         let currentSessionId = null;
-        let userId = 'demo_user_' + Math.random().toString(36).substr(2, 9);
+        let userId = getUserId(); // 从localStorage获取或生成新的用户ID
         let availableProviders = [];
         let allModels = {};
         let selectedProvider = null;
@@ -1635,6 +1576,27 @@
         let currentAssistantType = 'assistant'; // 当前选中的助手类型
         let currentImageData = null; // 当前选中的图片数据
         let currentImageType = null; // 当前选中的图片类型
+
+        /**
+         * 获取或生成用户ID
+         * 从localStorage中获取已存在的user_id，如果不存在则生成新的并保存
+         * @returns {string} 用户ID
+         */
+        function getUserId() {
+            let storedUserId = localStorage.getItem('user_id');
+            if (!storedUserId) {
+                // 生成新的用户ID
+                storedUserId = 'demo_user_' + Math.random().toString(36).substr(2, 9);
+                // 保存到localStorage
+                localStorage.setItem('user_id', storedUserId);
+                console.log('生成新的用户ID:', storedUserId);
+            } else {
+                console.log('使用已存在的用户ID:', storedUserId);
+            }
+            return storedUserId;
+        }
+
+
 
         /**
          * 获取可用的AI提供商列表和模型信息
@@ -1649,8 +1611,6 @@
 
                 // 加载模型列表到选择器
                 loadModelSelector();
-
-
             } catch (error) {
                 console.error('加载AI提供商失败:', error);
                 const modelSelect = document.getElementById('modelSelect');
@@ -1700,6 +1660,150 @@
             styleModelSelector();
         }
 
+        /**
+         * 加载会话列表
+         * 从后端获取当前用户的所有会话
+         */
+        /**
+         * 加载指定助手的历史消息
+         * @param {string} assistantType - 助手类型
+         */
+        async function loadAssistantHistory(assistantType) {
+            try {
+                // 获取该助手的sessionId
+                const sessionId = localStorage.getItem(`${assistantType}_sessionId`);
+                if (!sessionId) {
+                    // 如果没有sessionId，显示欢迎消息
+                    showWelcomeMessage(assistantType);
+                    return;
+                }
+                
+                // 更新当前会话ID
+                currentSessionId = sessionId;
+                
+                // 清空当前聊天消息
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.innerHTML = '';
+                
+                // 显示加载提示
+                const loadingMessage = document.createElement('div');
+                loadingMessage.className = 'message assistant';
+                loadingMessage.innerHTML = `
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content-wrapper">
+                        正在加载历史消息...
+                    </div>
+                `;
+                chatMessages.appendChild(loadingMessage);
+                
+                // 从后端获取历史消息
+                const response = await fetch(`/chat/history?session_id=${sessionId}&user_id=${userId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // 清空加载提示
+                    chatMessages.innerHTML = '';
+                    
+                    // 渲染历史消息
+                    if (data.messages && data.messages.length > 0) {
+                        data.messages.forEach(message => {
+                            renderHistoryMessage(message);
+                        });
+                    } else {
+                        // 如果没有历史消息，显示欢迎消息
+                        showWelcomeMessage(assistantType);
+                    }
+                    
+                    // 滚动到底部
+                    scrollToBottom();
+                    
+
+                } else {
+                    console.error('加载历史消息失败:', response.statusText);
+                    showWelcomeMessage(assistantType);
+                }
+            } catch (error) {
+                console.error('加载助手历史失败:', error);
+                showWelcomeMessage(assistantType);
+            }
+        }
+        
+        /**
+         * 显示助手欢迎消息
+         * @param {string} assistantType - 助手类型
+         */
+        function showWelcomeMessage(assistantType) {
+            const roleConfig = aiRolesConfig[assistantType];
+            if (!roleConfig) return;
+            
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+            
+            const welcomeMessage = document.createElement('div');
+            welcomeMessage.className = 'message assistant';
+            welcomeMessage.innerHTML = `
+                <div class="message-avatar" data-icon="${roleConfig.icon}"></div>
+                <div class="message-content-wrapper">
+                    👋 您好！我是${roleConfig.name}，${roleConfig.description}
+                </div>
+            `;
+            chatMessages.appendChild(welcomeMessage);
+        }
+
+        /**
+         * 渲染历史消息
+         * @param {Object} message - 消息对象
+         */
+        function renderHistoryMessage(message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${message.role}`;
+
+            // 创建头像
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'message-avatar';
+
+            // 如果是assistant消息，设置助手图标
+            if (message.role === 'assistant') {
+                const icon = getAssistantIcon(currentAssistantType);
+                avatarDiv.setAttribute('data-icon', icon);
+            }
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content-wrapper';
+
+            // 处理消息内容
+            if (message.role === 'assistant') {
+                // 对于AI回复，使用Markdown渲染
+                renderMarkdownContent(message.content, contentDiv);
+            } else {
+                // 对于用户消息，检查是否包含图片
+                if (message.image_data) {
+                    // 创建图片元素
+                    const imageDiv = document.createElement('div');
+                    imageDiv.className = 'message-image';
+                    const img = document.createElement('img');
+                    img.src = `data:${message.image_type};base64,${message.image_data}`;
+                    img.alt = '用户上传的图片';
+                    img.style.maxWidth = '300px';
+                    img.style.borderRadius = '8px';
+                    imageDiv.appendChild(img);
+                    contentDiv.appendChild(imageDiv);
+                }
+                
+                // 添加文本内容
+                if (message.content && message.content.trim()) {
+                    const textDiv = document.createElement('div');
+                    textDiv.textContent = message.content;
+                    contentDiv.appendChild(textDiv);
+                }
+            }
+
+            messageDiv.appendChild(avatarDiv);
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+        }
+
         // 全局变量存储从后端获取的提供商图标配置
         let providerIcons = {};
 
@@ -1712,6 +1816,14 @@
 
         // 全局变量存储从接口获取的角色配置
         let aiRolesConfig = {};
+
+        /**
+         * 获取当前选中的助手类型
+         * @returns {string} 当前助手类型
+         */
+        function getCurrentAssistant() {
+            return currentAssistantType || 'assistant';
+        }
 
         /**
          * 获取助手图标
@@ -1776,19 +1888,11 @@
                 return;
             }
 
-            const config = {
-                icon: roleConfig.icon || getAssistantIcon(assistantType),
-                name: roleConfig.name,
-                welcome: `👋 您好！我是${roleConfig.name}，${roleConfig.description}`
-            };
-
             // 更新选中模型信息显示
             updateSelectedModelInfo(assistantType);
 
-            // 开始新的对话会话
-            startNewChat(config.welcome);
-
-
+            // 加载该助手的历史消息
+            loadAssistantHistory(assistantType);
         }
 
         /**
@@ -1909,6 +2013,11 @@
          * 创建新的会话ID并初始化聊天界面
          * @param {string} welcomeMessage - 自定义欢迎消息
          */
+        /**
+         * 开始新的聊天会话
+         * 为当前助手类型创建新的会话ID并初始化聊天界面
+         * @param {string} welcomeMessage - 自定义欢迎消息
+         */
         async function startNewChat(welcomeMessage = null) {
             try {
                 const response = await fetch(`/chat/start?user_id=${userId}`, {
@@ -1917,14 +2026,28 @@
                 const data = await response.json();
 
                 currentSessionId = data.session_id;
-                document.getElementById('clearHistoryBtn').disabled = false;
+                
+                // 获取当前助手类型
+                const assistantType = getCurrentAssistant();
+                
+                // 为当前助手类型保存会话ID到localStorage
+                const sessionKey = `${assistantType}_sessionId`;
+                localStorage.setItem(sessionKey, data.session_id);
+                
+
 
                 // 清空聊天记录
                 const chatMessages = document.getElementById('chatMessages');
                 chatMessages.innerHTML = '';
 
-                // 添加欢迎消息（使用自定义消息或服务器返回的消息）
-                addMessage('assistant', welcomeMessage || data.welcome_message);
+                // 获取助手配置信息
+                const roleConfig = aiRolesConfig[assistantType];
+                const defaultWelcome = roleConfig ? 
+                    `👋 您好！我是${roleConfig.name}，${roleConfig.description}` : 
+                    data.welcome_message;
+
+                // 添加欢迎消息（使用自定义消息或默认欢迎消息）
+                addMessage('assistant', welcomeMessage || defaultWelcome);
 
                 // 聚焦输入框
                 document.getElementById('messageInput').focus();
@@ -2459,34 +2582,7 @@
         /**
          * 清除当前会话的对话历史
          */
-        async function clearHistory() {
-            if (!currentSessionId) {
-                alert('没有活动的会话');
-                return;
-            }
 
-            if (!confirm('确定要清除当前会话的对话历史吗？此操作不可撤销。')) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/chat/history/${currentSessionId}?user_id=${userId}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                     // 清除前端显示的消息
-                     document.getElementById('chatMessages').innerHTML = '';
-                     addMessage('assistant', '✅ 对话历史已清除，您可以开始新的对话了。');
-                } else {
-                    const error = await response.json();
-                    alert('清除失败: ' + (error.detail || '未知错误'));
-                }
-            } catch (error) {
-                console.error('清除历史时出错:', error);
-                alert('清除失败: ' + error.message);
-            }
-        }
 
 
 
@@ -2748,6 +2844,10 @@
             // 加载AI提供商列表
             loadProviders();
 
+            // 加载当前助手的历史消息
+            const currentAssistant = getCurrentAssistant();
+            loadAssistantHistory(currentAssistant);
+
             // 配置marked.js选项
             if (typeof marked !== 'undefined') {
                 marked.setOptions({
@@ -2767,10 +2867,6 @@
                     xhtml: true
                 });
             }
-
-
-
-
         });
 
 
