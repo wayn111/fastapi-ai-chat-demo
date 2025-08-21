@@ -718,6 +718,7 @@
 
         .main-input-wrapper {
             width: 100%;
+            position: relative;
         }
 
         .chat-input textarea {
@@ -726,6 +727,7 @@
             outline: none;
             background: transparent;
             font-size: 14px;
+            padding-top: 8px;
             color: var(--text-primary);
             resize: none;
             min-height: 120px;
@@ -817,48 +819,67 @@
         }
 
         .image-preview {
-            margin-top: 6px;
-            padding: 6px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
             display: none;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 0;
+            position: absolute;
+            top: -105px;
+            left: 0;
+            right: 0;
+            z-index: 10;
         }
 
         .image-preview.show {
-            display: block;
+            display: flex;
         }
 
         .image-preview-item {
             display: flex;
             align-items: center;
             gap: 6px;
-            padding: 3px;
+            padding: 4px 8px;
+            background: var(--background-alt);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            font-size: 12px;
+            color: var(--text-primary);
+            max-width: 200px;
         }
 
         .image-preview-thumbnail {
-            width: 32px;
-            height: 32px;
+            width: 80px;
+            height: 80px;
             object-fit: cover;
-            border-radius: 3px;
+            border-radius: 4px;
             border: 1px solid var(--border);
+            flex-shrink: 0;
         }
 
         .image-preview-info {
             flex: 1;
-            font-size: 12px;
+            font-size: 11px;
             color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
         }
 
         .image-preview-remove {
-            padding: 3px 6px;
+            padding: 2px 4px;
             background: var(--danger);
             color: white;
             border: none;
-            border-radius: 3px;
-            font-size: 11px;
+            border-radius: 50%;
+            font-size: 10px;
             cursor: pointer;
             transition: all var(--transition-fast);
+            width: 16px;
+            height: 16px;
+            position: absolute;
+            top: 9px;
+            left: 75px;
         }
 
         .image-preview-remove:hover {
@@ -1444,7 +1465,7 @@
                         <!-- 助手列表将通过 JavaScript 动态加载 -->
                     </div>
                 </div>
-                
+
                 <!-- 会话列表区域已移除 -->
         </div>
 
@@ -1474,6 +1495,9 @@
             <div class="chat-input">
                 <div class="input-container">
                     <div class="main-input-wrapper">
+                        <div class="image-preview" id="imagePreview">
+                            <!-- 图片预览将在这里显示 -->
+                        </div>
                         <textarea id="messageInput" placeholder="输入您的消息... (Enter 发送 / Ctrl Enter 换行)" onkeypress="handleKeyPress(event)"></textarea>
                         <div class="input-controls">
                             <div class="left-controls">
@@ -1503,9 +1527,6 @@
                                 </button>
                             </div>
                         </div>
-                    </div>
-                    <div class="image-preview" id="imagePreview">
-                        <!-- 图片预览将在这里显示 -->
                     </div>
                 </div>
             </div>
@@ -1623,14 +1644,14 @@
                     showWelcomeMessage(assistantType);
                     return;
                 }
-                
+
                 // 更新当前会话ID
                 currentSessionId = sessionId;
-                
+
                 // 清空当前聊天消息
                 const chatMessages = document.getElementById('chatMessages');
                 chatMessages.innerHTML = '';
-                
+
                 // 显示加载提示
                 const loadingMessage = document.createElement('div');
                 loadingMessage.className = 'message assistant';
@@ -1641,15 +1662,15 @@
                     </div>
                 `;
                 chatMessages.appendChild(loadingMessage);
-                
+
                 // 从后端获取历史消息
                 const response = await fetch(`/chat/history?session_id=${sessionId}&user_id=${userId}`);
                 if (response.ok) {
                     const data = await response.json();
-                    
+
                     // 清空加载提示
                     chatMessages.innerHTML = '';
-                    
+
                     // 渲染历史消息
                     if (data.messages && data.messages.length > 0) {
                         data.messages.forEach(message => {
@@ -1659,10 +1680,10 @@
                         // 如果没有历史消息，显示欢迎消息
                         showWelcomeMessage(assistantType);
                     }
-                    
+
                     // 滚动到底部
                     scrollToBottom();
-                    
+
 
                 } else {
                     console.error('加载历史消息失败:', response.statusText);
@@ -1673,7 +1694,7 @@
                 showWelcomeMessage(assistantType);
             }
         }
-        
+
         /**
          * 显示助手欢迎消息
          * @param {string} assistantType - 助手类型
@@ -1681,10 +1702,10 @@
         function showWelcomeMessage(assistantType) {
             const roleConfig = aiRolesConfig[assistantType];
             if (!roleConfig) return;
-            
+
             const chatMessages = document.getElementById('chatMessages');
             chatMessages.innerHTML = '';
-            
+
             const welcomeMessage = document.createElement('div');
             welcomeMessage.className = 'message assistant';
             welcomeMessage.innerHTML = `
@@ -1736,7 +1757,7 @@
                     imageDiv.appendChild(img);
                     contentDiv.appendChild(imageDiv);
                 }
-                
+
                 // 添加文本内容
                 if (message.content && message.content.trim()) {
                     const textDiv = document.createElement('div');
@@ -1820,7 +1841,23 @@
             // 更新选中模型信息显示
             updateSelectedModelInfo(assistantType);
 
-            // 加载该助手的历史消息
+            // 切换助手时处理sessionId
+            const sessionKey = `${assistantType}_sessionId`;
+            let sessionId = localStorage.getItem(sessionKey);
+            
+            if (sessionId) {
+                // 如果该助手已有sessionId，使用之前的
+                currentSessionId = sessionId;
+            } else {
+                // 如果没有sessionId，生成新的
+                const timestamp = Date.now();
+                const randomNum = Math.floor(Math.random() * 10000);
+                sessionId = `session_${timestamp}_${randomNum}`;
+                currentSessionId = sessionId;
+                localStorage.setItem(sessionKey, sessionId);
+            }
+
+            // 根据当前助手的sessionId重新调用history接口
             loadAssistantHistory(assistantType);
         }
 
@@ -1939,25 +1976,24 @@
 
         /**
          * 开始新的聊天会话
-         * 为当前助手类型创建新的会话ID并初始化聊天界面
          * @param {string} welcomeMessage - 自定义欢迎消息
          */
         async function startNewChat(welcomeMessage = null) {
             try {
-                const response = await fetch(`/chat/start?user_id=${userId}`, {
-                    method: 'POST'
-                });
-                const data = await response.json();
+                // 在前端生成唯一的session ID（时间戳 + 随机数）
+                const timestamp = Date.now();
+                const randomNum = Math.floor(Math.random() * 10000);
+                const sessionId = `session_${timestamp}_${randomNum}`;
 
-                currentSessionId = data.session_id;
-                
+                currentSessionId = sessionId;
+
                 // 获取当前助手类型
                 const assistantType = getCurrentAssistant();
-                
+
                 // 为当前助手类型保存会话ID到localStorage
                 const sessionKey = `${assistantType}_sessionId`;
-                localStorage.setItem(sessionKey, data.session_id);
-                
+                localStorage.setItem(sessionKey, sessionId);
+
 
 
                 // 清空聊天记录
@@ -1966,9 +2002,9 @@
 
                 // 获取助手配置信息
                 const roleConfig = aiRolesConfig[assistantType];
-                const defaultWelcome = roleConfig ? 
-                    `👋 您好！我是${roleConfig.name}，${roleConfig.description}` : 
-                    data.welcome_message;
+                const defaultWelcome = roleConfig ?
+                    `👋 您好！我是${roleConfig.name}，${roleConfig.description}` :
+                    '👋 您好！我是您的AI助手，很高兴为您服务！';
 
                 // 添加欢迎消息（使用自定义消息或默认欢迎消息）
                 addMessage('assistant', welcomeMessage || defaultWelcome);
@@ -1978,7 +2014,7 @@
 
             } catch (error) {
                 console.error('启动聊天失败:', error);
-                alert('启动聊天失败，请检查服务器连接');
+                alert('启动聊天失败，请重试');
             }
         }
 
@@ -2044,7 +2080,7 @@
             // 保存图片数据的临时变量
             const currentImageDataTmp = currentImageData;
             const currentImageTypeTmp = currentImageType;
-            
+
             // 清除图片预览
             if (currentImageData) {
                 removeImagePreview();
@@ -2499,12 +2535,6 @@
 
                 // 更新自定义选择器显示
                 updateCustomSelectDisplay();
-
-                // 只有在会话已存在时才添加切换提示消息
-                if (currentSessionId) {
-                    const modelName = this.options[this.selectedIndex].text;
-                    addMessage('assistant', `🔄 已切换到${modelName}，我将以新的模型为您服务。`);
-                }
             }
         });
 
@@ -2571,14 +2601,14 @@
 
                 customOption.addEventListener('click', () => {
                     modelSelect.selectedIndex = index;
-                    
+
                     // 更新选中状态
                     customSelectDropdown.querySelectorAll('.custom-option').forEach((opt, i) => {
                         opt.classList.toggle('selected', i === index - 1);
                     });
 
                     modelSelect.dispatchEvent(new Event('change'));
-                    
+
                     // 关闭下拉菜单
                     const customSelect = document.getElementById('customSelect');
                     customSelect.classList.remove('open');
@@ -2599,7 +2629,7 @@
             const customSelectText = customSelect.querySelector('.custom-select-text');
 
             const selectedOption = modelSelect.options[modelSelect.selectedIndex];
-            
+
             if (modelSelect.selectedIndex > 0 && selectedOption) {
                 const providerIcon = selectedOption.getAttribute('data-provider-icon') || '🤖';
                 const providerName = selectedOption.getAttribute('data-provider-name') || '';
@@ -2674,15 +2704,11 @@
          */
         function showImagePreview(file, filename) {
             const imagePreview = document.getElementById('imagePreview');
-            
+
             imagePreview.innerHTML = `
                 <div class="image-preview-item">
                     <img class="image-preview-thumbnail" src="${URL.createObjectURL(file)}">
-                    <div class="image-preview-info">
-                        <div>${filename}</div>
-                        <div>${(file.size / 1024).toFixed(1)} KB</div>
-                    </div>
-                    <button class="image-preview-remove" onclick="removeImagePreview()">删除</button>
+                    <button class="image-preview-remove" onclick="removeImagePreview()" title="删除图片">×</button>
                 </div>
             `;
             imagePreview.classList.add('show');

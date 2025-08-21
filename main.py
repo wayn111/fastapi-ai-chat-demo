@@ -380,33 +380,7 @@ async def api_info():
     logger.info("获取API信息")
     return {"message": "FastAPI AI聊天应用演示", "version": "1.0.0"}
 
-@app.post("/chat/start")
-async def start_chat(user_id: str = Query(..., description="用户ID")):
-    """开始新的聊天会话"""
-    logger.info(f"开始新聊天会话 - 用户: {user_id}")
 
-    try:
-        session_id = generate_session_id()
-
-        # 初始化会话
-        conversation_key = get_conversation_key(user_id, session_id)
-        welcome_msg = ChatMessage(
-            role="assistant",
-            content="你好！我是你的AI助手，有什么可以帮助你的吗？",
-            timestamp=time.time()
-        )
-
-        await save_message_to_redis(user_id, session_id, welcome_msg)
-
-        logger.info(f"聊天会话创建成功 - 用户: {user_id}, 会话: {session_id[:8]}...")
-        return {
-            "session_id": session_id,
-            "message": "聊天会话已创建",
-            "welcome_message": welcome_msg.content
-        }
-    except Exception as e:
-        logger.error(f"创建聊天会话失败 - 用户: {user_id}, 错误: {e}")
-        raise HTTPException(status_code=500, detail="创建会话失败")
 
 @app.post("/chat/stream")
 async def chat_stream(request: ChatRequest):
