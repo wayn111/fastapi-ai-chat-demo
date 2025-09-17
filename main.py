@@ -19,11 +19,12 @@ from PIL import Image
 from fastapi import FastAPI, HTTPException, Query, File, UploadFile, Form
 from fastapi.responses import StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import redis
 
 from config import Config
 from ai_providers.factory import AIProviderFactory, MultiProviderManager
+from ai_providers.base import AIMessage, ImageGenerationRequest, ImageGenerationResponse
 
 # 配置日志系统
 # 创建配置实例
@@ -89,25 +90,47 @@ except ValueError as e:
 # 数据模型定义
 class ChatMessage(BaseModel):
     """聊天消息模型"""
-    role: str
-    content: str
-    timestamp: float
+    role: str = Field(..., description="消息角色 (user/assistant)")
+    content: str = Field(..., description="消息内容")
+    timestamp: Optional[float] = Field(None, description="时间戳")
+    image_data: Optional[str] = Field(None, description="图片数据 (base64编码)")
+    image_type: Optional[str] = Field(None, description="图片类型 (image/jpeg, image/png等)")
 
 class ChatRequest(BaseModel):
     """聊天请求模型"""
-    user_id: str
-    message: str
-    session_id: str = None
-    provider: Optional[str] = None  # AI提供商选择，如果不指定则使用默认提供商
-    model: Optional[str] = None  # AI模型选择
-    image_data: Optional[str] = None  # Base64编码的图片数据
-    image_type: Optional[str] = None  # 图片类型，如 'image/jpeg', 'image/png'
+    user_id: str = Field(..., description="用户ID")
+    session_id: str = Field(..., description="会话ID")
+    message: str = Field(..., description="用户消息")
+    role: Optional[str] = Field("assistant", description="AI角色")
+    provider: Optional[str] = Field(None, description="AI提供商")
+    model: Optional[str] = Field(None, description="AI模型")
+    image_data: Optional[str] = Field(None, description="图片数据 (base64编码)")
+    image_type: Optional[str] = Field(None, description="图片类型 (image/jpeg, image/png等)")
 
 class ChatResponse(BaseModel):
     """聊天响应模型"""
-    session_id: str
-    message: str
-    timestamp: float
+    session_id: str = Field(..., description="会话ID")
+    message: str = Field(..., description="AI回复")
+    timestamp: float = Field(..., description="时间戳")
+    provider: str = Field(..., description="使用的AI提供商")
+    model: str = Field(..., description="使用的AI模型")
+
+class ImageGenerationAPIRequest(BaseModel):
+    """图片生成API请求模型"""
+    prompt: str = Field(..., description="图片生成提示词")
+    size: Optional[str] = Field("1024x1024", description="图片尺寸")
+    quality: Optional[str] = Field("standard", description="图片质量")
+    image_data: Optional[str] = Field(None, description="参考图片数据 (base64编码，图片生成图片模式)")
+    provider: Optional[str] = Field("doubao", description="AI提供商")
+    image_type: Optional[str] = Field(None, description="图片类型")
+
+class ImageGenerationAPIResponse(BaseModel):
+    """图片生成API响应模型"""
+    success: bool = Field(..., description="是否成功")
+    message: str = Field(..., description="响应消息")
+    data: Optional[dict] = Field(None, description="图片数据")
+    provider: str = Field(..., description="使用的AI提供商")
+    timestamp: float = Field(..., description="时间戳")
 
 # AI角色配置
 AI_ROLES = {
@@ -389,7 +412,7 @@ async def chat_stream(request: ChatRequest):
     role = "assistant"
     provider = request.provider
     model = getattr(request, 'model', None)
-    
+
     logger.info(f"流式聊天请求 - 用户: {request.user_id}, 会话: {request.session_id[:8]}..., 角色: {role}, 消息长度: {len(request.message)}, 提供商: {provider}")
 
     if role not in AI_ROLES:
@@ -628,7 +651,7 @@ async def upload_image(file: UploadFile = File(...)):
 
         # 读取文件内容
         file_content = await file.read()
-        
+
         # 检查文件大小（10MB = 10 * 1024 * 1024 bytes）
         max_size = 10 * 1024 * 1024  # 10MB
         if len(file_content) > max_size:
@@ -664,3 +687,69 @@ async def upload_image(file: UploadFile = File(...)):
     except Exception as e:
         logger.error(f"图片上传失败: {e}")
         raise HTTPException(status_code=500, detail=f"图片上传失败: {str(e)}")
+
+@app.post("/generate/image", response_model=ImageGenerationAPIResponse)
+async def generate_image(request: ImageGenerationAPIRequest):
+    """图片生成API接口
+
+    支持两种模式：
+    1. 纯文本生成图片：仅提供prompt参数
+    2. 图片生成图片：提供prompt和image_url/image_data参数
+    """
+    logger.info(f"接收图片生成请求 - 提示词: {request.prompt[:50]}..., 提供商: {request.provider}")
+
+    try:
+        # 获取AI提供商
+        provider_obj = ai_manager.get_provider(request.provider)
+        if not provider_obj:
+            raise HTTPException(status_code=400, detail=f"不支持的AI提供商: {request.provider}")
+
+        # 检查提供商是否支持图片生成
+        if not hasattr(provider_obj, 'generate_image'):
+            raise HTTPException(status_code=400, detail=f"提供商 {request.provider} 不支持图片生成功能")
+
+        # 构建图片生成请求
+        generation_request = ImageGenerationRequest(
+            prompt=request.prompt,
+            size=request.size,
+            quality=request.quality,
+            response_format="b64_json",
+            image_data=request.image_data,
+            image_type=request.image_type,
+            watermark=False
+        )
+
+        # 调用提供商的图片生成方法
+        logger.info(f"开始生成图片 - 提供商: {request.provider}, 模式: {'图片生成图片' if request.image_data or request.image_data else '文本生成图片'}")
+        generation_response = await provider_obj.generate_image(generation_request)
+
+        logger.info(f"图片生成成功 - 提供商: {request.provider}, URL: {generation_response.url[:50] if generation_response.url else 'N/A'}...")
+
+        # 构建响应数据
+        response_data = {
+            "image_url": generation_response.url,
+            "image_b64": generation_response.b64_json,
+            "revised_prompt": generation_response.revised_prompt,
+            "size": request.size,
+            "quality": request.quality,
+        }
+
+        return ImageGenerationAPIResponse(
+            success=True,
+            message="图片生成成功",
+            data=response_data,
+            provider=request.provider,
+            timestamp=time.time()
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"图片生成失败 - 提示词: {request.prompt[:50]}..., 提供商: {request.provider}, 错误: {e}")
+        return ImageGenerationAPIResponse(
+            success=False,
+            message=f"图片生成失败: {str(e)}",
+            data=None,
+            provider=request.provider,
+            timestamp=time.time()
+        )

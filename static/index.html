@@ -783,15 +783,16 @@
             cursor: pointer;
             align-items: center;
             justify-content: center;
-            width: 28px;
-            height: 28px;
+            gap: 4px;
+            padding: 2px;
             border: 1px solid var(--border);
             border-radius: 6px;
             background: var(--background);
             transition: all var(--transition-fast);
         }
 
-        .image-upload-btn {
+        .image-upload-btn,
+        .image-generate-btn {
             color: var(--text-secondary);
             font-size: 14px;
             cursor: pointer;
@@ -799,12 +800,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 100%;
-            height: 100%;
-            border-radius: 6px;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            position: relative;
         }
 
-        .image-upload-btn:hover {
+        .image-upload-btn:hover,
+        .image-generate-btn:hover {
             color: var(--primary);
             background: rgba(59, 130, 246, 0.1);
             transform: scale(1.05);
@@ -927,6 +930,238 @@
             border-color: var(--text-tertiary);
             cursor: not-allowed;
             opacity: 0.7;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            font-size: 24px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+            background: var(--background-hover);
+        }
+
+        .modal-body {
+            padding: 20px 24px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding: 16px 24px 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--background);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all var(--transition-fast);
+            resize: vertical;
+        }
+
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 16px;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .radio-label input[type="radio"] {
+            margin: 0;
+        }
+
+        .file-upload-area {
+            position: relative;
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all var(--transition-fast);
+            cursor: pointer;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .file-upload-area input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-placeholder {
+            color: var(--text-secondary);
+        }
+
+        .upload-placeholder span {
+            font-size: 32px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .upload-placeholder p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .base-image-preview {
+            margin-top: 12px;
+        }
+
+        .base-image-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-primary:disabled {
+            background: var(--text-tertiary);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .btn-secondary {
+            background: var(--background);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--background-hover);
+            border-color: var(--border-hover);
         }
 
         .model-selector {
@@ -1519,6 +1754,9 @@
                                         <span>📷</span>
                                         <input type="file" class="image-upload-input" id="imageUpload" accept="image/*" onchange="handleImageUpload(event)">
                                     </div>
+                                    <div class="image-generate-btn" onclick="showImageGenerateModal()" title="生成图片">
+                                        <span>🎨</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="right-controls">
@@ -1533,6 +1771,60 @@
         </div>
     </div>
 
+    <!-- 图片生成模态框 -->
+    <div id="imageGenerateModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🎨 AI 图片生成</h3>
+                <span class="modal-close" onclick="hideImageGenerateModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="imagePrompt">描述您想要生成的图片：</label>
+                    <textarea id="imagePrompt" placeholder="请详细描述您想要生成的图片内容，例如：一只可爱的橙色小猫坐在花园里，阳光明媚，卡通风格" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="imageSize">图片尺寸：</label>
+                        <select id="imageSize">
+                            <option value="1024x1024">正方形 (1024x1024)</option>
+                            <option value="1024x1792">竖版 (1024x1792)</option>
+                            <option value="1792x1024">横版 (1792x1024)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>生成模式：</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="generateMode" value="text" checked>
+                            <span>纯文本生成</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="generateMode" value="image">
+                            <span>基于图片生成</span>
+                        </label>
+                    </div>
+                </div>
+                <div id="baseImageSection" class="form-group" style="display: none;">
+                    <label for="baseImageUpload">选择基础图片：</label>
+                    <div class="file-upload-area">
+                        <input type="file" id="baseImageUpload" accept="image/*" onchange="handleBaseImageUpload(event)">
+                        <div class="upload-placeholder">
+                            <span>📷</span>
+                            <p>点击选择图片或拖拽图片到此处</p>
+                        </div>
+                        <div id="baseImagePreview" class="base-image-preview"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideImageGenerateModal()">取消</button>
+                <button class="btn btn-primary" id="generateImageBtn" onclick="generateImage()">生成图片</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentSessionId = null;
         let userId = getUserId(); // 从localStorage获取或生成新的用户ID
@@ -1543,6 +1835,7 @@
         let currentAssistantType = 'assistant'; // 当前选中的助手类型
         let currentImageData = null; // 当前选中的图片数据
         let currentImageType = null; // 当前选中的图片类型
+        let baseImageFile = null; // 基础图片文件
 
         /**
          * 获取或生成用户ID
@@ -1844,7 +2137,7 @@
             // 切换助手时处理sessionId
             const sessionKey = `${assistantType}_sessionId`;
             let sessionId = localStorage.getItem(sessionKey);
-            
+
             if (sessionId) {
                 // 如果该助手已有sessionId，使用之前的
                 currentSessionId = sessionId;
@@ -2725,6 +3018,221 @@
             currentImageType = null;
         }
 
+        // 图片生成相关功能
+        let imageGenerateModal = null;
+
+        /**
+         * 显示图片生成模态框
+         */
+        function showImageGenerateModal() {
+            imageGenerateModal = document.getElementById('imageGenerateModal');
+            imageGenerateModal.style.display = 'flex';
+
+            // 重置表单
+            document.getElementById('imagePrompt').value = '';
+            document.getElementById('imageSize').value = '1024x1024';
+            document.getElementsByName('generateMode').value = 'text';
+            baseImageFile = null;
+            updateBaseImageUpload();
+        }
+
+        /**
+         * 隐藏图片生成模态框
+         */
+        function hideImageGenerateModal() {
+            if (imageGenerateModal) {
+                imageGenerateModal.style.display = 'none';
+            }
+        }
+
+        /**
+         * 更新基础图片上传区域显示状态
+         */
+        function updateBaseImageUpload() {
+            const mode = document.querySelector('input[name="generateMode"]:checked').value;
+            const baseImageSection = document.getElementById('baseImageSection');
+            const baseImagePreview = document.getElementById('baseImagePreview');
+
+            if (mode === 'image') {
+                baseImageSection.style.display = 'block';
+            } else {
+                baseImageSection.style.display = 'none';
+                baseImageFile = null;
+                baseImagePreview.innerHTML = '';
+            }
+        }
+
+        /**
+         * 处理基础图片文件选择
+         */
+        function handleBaseImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 检查文件类型
+            if (!file.type.startsWith('image/')) {
+                alert('请选择图片文件');
+                event.target.value = '';
+                return;
+            }
+
+            // 检查文件大小（限制为10MB）
+            if (file.size > 10 * 1024 * 1024) {
+                alert('图片文件大小不能超过10MB');
+                event.target.value = '';
+                return;
+            }
+
+            baseImageFile = file;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('baseImagePreview');
+                preview.innerHTML = `<img src="${e.target.result}" alt="基础图片预览">`;
+            };
+            reader.onerror = function() {
+                alert('图片读取失败，请重新选择');
+                event.target.value = '';
+                baseImageFile = null;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        /**
+         * 生成图片
+         */
+        async function generateImage() {
+            const prompt = document.getElementById('imagePrompt').value.trim();
+            const size = document.getElementById('imageSize').value;
+            const mode = document.querySelector('input[name="generateMode"]:checked').value;
+
+            // 验证输入
+            if (!prompt) {
+                alert('请输入图片描述');
+                document.getElementById('imagePrompt').focus();
+                return;
+            }
+
+            if (prompt.length < 5) {
+                alert('图片描述至少需要5个字符');
+                document.getElementById('imagePrompt').focus();
+                return;
+            }
+
+            if (mode === 'image' && !baseImageFile) {
+                alert('请选择基础图片');
+                return;
+            }
+
+            const generateBtn = document.getElementById('generateImageBtn');
+            const originalText = generateBtn.textContent;
+            generateBtn.disabled = true;
+            generateBtn.textContent = '生成中...';
+
+            try {
+                // 构建JSON请求数据
+                const requestData = {
+                    prompt: prompt,
+                    size: size,
+                    provider: 'doubao',
+                    image_type: 'png'  // 生成的图片默认为PNG格式
+                };
+
+                // 如果有基础图片，使用 upload/image 接口获取图片格式和数据
+                if (baseImageFile) {
+                    try {
+                        // 创建FormData对象上传图片
+                        const formData = new FormData();
+                        formData.append('file', baseImageFile);
+
+                        // 调用 upload/image 接口
+                        const uploadResponse = await fetch('/upload/image', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (uploadResponse.ok) {
+                            const uploadResult = await uploadResponse.json();
+
+                            // 从返回的 content_type 中提取图片格式
+                            const contentType = uploadResult.data.content_type; // 例如: 'image/jpeg'
+                            const imageFormat = contentType.split('/')[1]; // 提取格式部分: 'jpeg'
+                            requestData.image_type = imageFormat;
+
+                            // 使用返回的 base64_data
+                            requestData.image_data = uploadResult.data.base64_data;
+                        } else {
+                            const uploadError = await uploadResponse.json();
+                            throw new Error('图片上传失败: ' + (uploadError.detail || '未知错误'));
+                        }
+                    } catch (uploadError) {
+                        console.error('图片上传失败:', uploadError);
+                        alert('图片上传失败: ' + uploadError.message);
+                        return;
+                    }
+                }
+
+                const response = await fetch('/generate/image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // 将生成的图片添加到聊天中
+                    const imageData = result.data.image_b64;
+                    const imageUrl = `data:image/png;base64,${imageData}`;
+
+                    // 创建图片消息
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message assistant-message';
+                    messageDiv.innerHTML = `
+                        <div class="message-avatar" data-icon="🎨"></div>
+                        <div class="message-content-wrapper">
+                            <div class="message-content">
+                                <img src="${imageUrl}" alt="生成的图片" style="max-width: 100%; border-radius: 8px; margin-top: 8px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
+                                <p style="margin-top: 8px; font-size: 14px; color: var(--text-secondary);">🎨 根据描述"${prompt}"生成的图片</p>
+                            </div>
+                        </div>
+                    `;
+
+                    const chatMessages = document.getElementById('chatMessages');
+                    chatMessages.appendChild(messageDiv);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                    // 重置表单
+                    document.getElementById('imagePrompt').value = '';
+                    document.getElementById('baseImageUpload').value = '';
+                    document.getElementById('baseImagePreview').innerHTML = '';
+                    baseImageFile = null;
+
+                    // 显示成功消息
+                    alert('图片生成成功！');
+
+                    // 隐藏模态框
+                    hideImageGenerateModal();
+                } else {
+                    const errorMessage = result.message;
+                    console.error('图片生成失败:', result);
+                    alert('图片生成失败: ' + errorMessage);
+                }
+            } catch (error) {
+                console.error('图片生成错误:', error);
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    alert('网络连接失败，请检查网络连接后重试');
+                } else {
+                    alert('图片生成失败，请稍后重试');
+                }
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = originalText;
+            }
+        }
+
 
 
         // 页面加载完成后的初始化
@@ -2757,6 +3265,29 @@
                     smartypants: true,
                     xhtml: true
                 });
+            }
+
+            // 绑定图片生成模态框事件
+            const modal = document.getElementById('imageGenerateModal');
+            if (modal) {
+                // 点击模态框背景关闭
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        hideImageGenerateModal();
+                    }
+                });
+
+                // 绑定生成模式切换事件
+                const generateModeRadios = document.querySelectorAll('input[name="generateMode"]');
+                generateModeRadios.forEach(radio => {
+                    radio.addEventListener('change', updateBaseImageUpload);
+                });
+
+                // 绑定基础图片选择事件
+                const baseImageUpload = document.getElementById('baseImageUpload');
+                if (baseImageUpload) {
+                    baseImageUpload.addEventListener('change', handleBaseImageSelect);
+                }
             }
         });
 

@@ -238,6 +238,21 @@ class OpenAICompatibleProvider(BaseAIProvider):
 
         return request_params
 
+    def generate_image(self, request: 'ImageGenerationRequest') -> 'ImageGenerationResponse':
+        """
+        生成图片（默认实现，子类需要重写）
+        
+        Args:
+            request: 图片生成请求
+            
+        Returns:
+            ImageGenerationResponse: 图片生成响应
+            
+        Raises:
+            NotImplementedError: 当前提供商不支持图片生成功能
+        """
+        raise NotImplementedError(f"{self.__class__.__name__} 不支持图片生成功能")
+    
     def validate_config(self) -> bool:
         """
         验证配置是否有效
